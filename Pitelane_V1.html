@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Pitlane — Email Editor</title>
+<script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,sans-serif;background:#e8e8e4;color:#1a1a1a;height:100vh;overflow:hidden}
+:root{--sw:238px;--pw:282px;--th:52px;--ac:#E8401C;--ac2:#c73516;--bg:#fff;--bg2:#f6f6f3;--bd:rgba(0,0,0,.11);--bd2:rgba(0,0,0,.24);--t:#1a1a1a;--t2:#666;--t3:#999}
+.app{display:grid;grid-template-rows:var(--th) 1fr;grid-template-columns:var(--sw) 1fr var(--pw);height:100vh}
+.topbar{grid-column:1/-1;display:flex;align-items:center;gap:8px;padding:0 16px;background:#111;border-bottom:1px solid rgba(255,255,255,.07);z-index:20}
+.logo{display:flex;align-items:center;gap:9px;margin-right:8px}
+.lw{font-size:15px;font-weight:700;color:#fff;letter-spacing:-.3px}
+.lw b{color:#E8401C}
+.vsep{width:1px;height:22px;background:rgba(255,255,255,.14);margin:0 2px}
+.tbtn{display:inline-flex;align-items:center;gap:5px;padding:5px 11px;border-radius:7px;border:1px solid rgba(255,255,255,.18);background:transparent;color:rgba(255,255,255,.8);font-size:12px;cursor:pointer;white-space:nowrap;font-family:inherit;transition:all .12s}
+.tbtn:hover{background:rgba(255,255,255,.09);color:#fff}
+.tbtn-ac{background:#E8401C;color:#fff;border-color:transparent}
+.tbtn-ac:hover{background:#c73516}
+.fx{flex:1}
+.sidebar{grid-column:1;grid-row:2;background:#fff;border-right:1px solid var(--bd);display:flex;flex-direction:column;overflow:hidden}
+.stabs{display:flex;border-bottom:1px solid var(--bd);flex-shrink:0;overflow-x:auto}
+.stab{flex:1;min-width:0;padding:9px 2px;font-size:10.5px;text-align:center;cursor:pointer;border:none;background:none;color:var(--t2);border-bottom:2px solid transparent;font-family:inherit;white-space:nowrap}
+.stab.on{color:#E8401C;border-bottom-color:#E8401C;font-weight:600}
+.sbody{flex:1;overflow-y:auto;padding:11px}
+.sh{font-size:10px;font-weight:600;color:var(--t2);text-transform:uppercase;letter-spacing:.08em;margin:12px 0 6px}
+.sh:first-child{margin-top:0}
+.bitem{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:7px;border:1px solid var(--bd);background:#fff;margin-bottom:5px;cursor:grab;font-size:12px;color:var(--t);user-select:none;transition:all .12s}
+.bitem:hover{background:var(--bg2);border-color:var(--bd2)}
+.bitem:active{cursor:grabbing;opacity:.55}
+.bitem i{font-size:15px;color:var(--t2)}
+/* module cards */
+.mcat{font-size:10px;font-weight:600;color:var(--t2);text-transform:uppercase;letter-spacing:.08em;margin:14px 0 6px;padding-bottom:5px;border-bottom:1px solid var(--bd)}
+.mcat:first-child{margin-top:0}
+.mcard{border:1px solid var(--bd);border-radius:8px;overflow:hidden;margin-bottom:8px;cursor:pointer;transition:all .14s;background:#fff}
+.mcard:hover{border-color:#E8401C;box-shadow:0 2px 12px rgba(232,64,28,.12)}
+.mcard-thumb{height:72px;overflow:hidden;position:relative}
+.mcard-label{display:flex;align-items:center;justify-content:space-between;padding:6px 9px;border-top:1px solid var(--bd)}
+.mcard-name{font-size:11px;font-weight:500;color:var(--t)}
+.mcard-tag{font-size:9px;color:var(--t3);background:var(--bg2);padding:1px 6px;border-radius:10px}
+/* template & creation cards */
+.tcard{border:1px solid var(--bd);border-radius:8px;overflow:hidden;margin-bottom:8px;cursor:pointer;transition:border-color .12s}
+.tcard:hover{border-color:#E8401C}
+.tthumb{height:60px;display:flex;flex-direction:column;gap:4px;padding:8px;background:var(--bg2)}
+.tbar{border-radius:2px;height:9px}
+.tlabel{font-size:11px;padding:5px 8px;color:var(--t2);font-weight:500}
+.ccard{border:1px solid var(--bd);border-radius:8px;overflow:hidden;margin-bottom:8px;transition:border-color .12s}
+.ccard:hover{border-color:#E8401C}
+.cmeta{padding:7px 9px 0;display:flex;align-items:center;gap:6px}
+.cname{font-size:12px;font-weight:500;color:var(--t);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1}
+.cacts{display:flex;gap:3px;flex-shrink:0}
+.cact{width:22px;height:22px;border-radius:5px;border:1px solid var(--bd);background:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--t2);font-family:inherit}
+.cact:hover{background:var(--bg2);color:var(--t)}
+.cact.del:hover{background:#fff0ed;color:#E8401C;border-color:#ffd9d0}
+.cdate{padding:3px 9px 7px;font-size:10px;color:var(--t3)}
+.cempty{text-align:center;padding:28px 12px}
+.cempty i{font-size:28px;display:block;margin-bottom:8px;opacity:.35;color:var(--t2)}
+.cempty p{font-size:12px;color:var(--t3);line-height:1.6}
+.nbadge{display:inline-block;background:#E8401C;color:#fff;border-radius:10px;padding:1px 5px;font-size:9px;font-weight:700;margin-left:3px;vertical-align:middle}
+.canvas{grid-column:2;grid-row:2;overflow-y:auto;padding:20px;display:flex;flex-direction:column;align-items:center}
+.ctop{width:100%;max-width:640px;display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.vtog{display:flex;border:1px solid var(--bd2);border-radius:7px;overflow:hidden}
+.vtab{padding:5px 12px;font-size:11px;cursor:pointer;border:none;background:none;color:var(--t2);font-family:inherit}
+.vtab.on{background:#E8401C;color:#fff}
+.ewrap{background:#fff;border-radius:4px;box-shadow:0 2px 18px rgba(0,0,0,.11);position:relative;transition:width .22s}
+.dzone{width:100%;display:flex;align-items:center;justify-content:center;border:2px dashed transparent;transition:all .14s;border-radius:3px}
+.dzone.over{border-color:#E8401C;background:rgba(232,64,28,.05);min-height:40px}
+.dzone.over::after{content:"Deposer ici";font-size:11px;color:#E8401C}
+.eblock{position:relative;cursor:pointer}
+.eblock:hover{outline:2px solid rgba(232,64,28,.3);outline-offset:-1px}
+.eblock.sel{outline:2px solid #E8401C;outline-offset:-1px}
+.bctrl{position:absolute;right:7px;top:7px;display:none;gap:3px;z-index:5}
+.eblock:hover .bctrl,.eblock.sel .bctrl{display:flex}
+.cbtn{width:25px;height:25px;border-radius:5px;background:#1a1a1a;color:#fff;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px}
+.cbtn.red{background:#E24B4A}
+.cbtn:hover{opacity:.78}
+.eempty{text-align:center;padding:60px 24px}
+.eempty i{font-size:38px;color:#ccc;display:block;margin-bottom:12px}
+.eempty p{font-size:13px;color:#aaa;line-height:1.6}
+.panel{grid-column:3;grid-row:2;background:#fff;border-left:1px solid var(--bd);display:flex;flex-direction:column;overflow:hidden}
+.ph{padding:10px 14px;border-bottom:1px solid var(--bd);font-size:10px;font-weight:600;color:var(--t2);text-transform:uppercase;letter-spacing:.08em;flex-shrink:0}
+.pb{flex:1;overflow-y:auto;padding:14px}
+.fl{font-size:11px;color:var(--t2);margin-bottom:3px;display:block;margin-top:2px}
+.fi{width:100%;padding:7px 10px;border:1px solid var(--bd2);border-radius:7px;font-size:12px;color:var(--t);background:#fff;margin-bottom:10px;outline:none;font-family:inherit}
+.fi:focus{border-color:#E8401C;box-shadow:0 0 0 2px rgba(232,64,28,.11)}
+textarea.fi{resize:vertical}
+select.fi{appearance:none;cursor:pointer}
+.crow{display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.csw{width:30px;height:30px;border-radius:6px;border:1px solid var(--bd2);overflow:hidden;flex-shrink:0;cursor:pointer}
+.csw input{width:200%;height:200%;margin:-25%;cursor:pointer;border:none}
+.nop{text-align:center;padding:24px 12px}
+.nop i{font-size:28px;color:#ccc;display:block;margin-bottom:10px}
+.nop p{font-size:12px;color:var(--t3);line-height:1.6}
+.tpill{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:20px;background:#fff0ed;color:#c73516;font-size:11px;font-weight:500;cursor:pointer;border:none;font-family:inherit}
+.tpill:hover{background:#ffd9d0}
+.mlist{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:12px}
+.qbtn-row{display:flex;gap:5px;margin-bottom:10px;flex-wrap:wrap}
+.qbtn{flex:1;min-width:0;padding:5px 4px;border-radius:6px;border:1px solid var(--bd2);background:transparent;color:var(--t2);font-size:11px;cursor:pointer;font-family:inherit;text-align:center}
+.qbtn.on{border-color:#E8401C;background:#fff0ed;color:#E8401C}
+.qbtn:hover:not(.on){background:var(--bg2)}
+.info-box{font-size:11px;color:var(--t3);line-height:1.6;padding:8px;background:var(--bg2);border-radius:6px;margin-bottom:10px}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.48);z-index:100;display:flex;align-items:center;justify-content:center}
+.modal{background:#fff;border-radius:12px;padding:24px;width:720px;max-height:85vh;overflow:auto;box-shadow:0 8px 40px rgba(0,0,0,.2)}
+.modal-sm{background:#fff;border-radius:12px;padding:24px;width:400px;box-shadow:0 8px 40px rgba(0,0,0,.2)}
+.mh{font-size:16px;font-weight:600;margin-bottom:16px}
+.mh2{font-size:13px;color:var(--t2);margin-bottom:14px;margin-top:-10px}
+.mtabs{display:flex;border-bottom:1px solid var(--bd);margin-bottom:16px}
+.mtab{padding:8px 14px;font-size:12px;cursor:pointer;border-bottom:2px solid transparent;color:var(--t2);background:none;border-top:none;border-left:none;border-right:none;font-family:inherit}
+.mtab.on{color:#E8401C;border-bottom-color:#E8401C}
+.modal pre{background:var(--bg2);border-radius:8px;padding:14px;font-size:11px;font-family:monospace;overflow:auto;white-space:pre-wrap;word-break:break-all;max-height:400px}
+.mfoot{display:flex;gap:8px;margin-top:16px;justify-content:flex-end}
+.sinput{width:100%;padding:9px 12px;border:1px solid var(--bd2);border-radius:8px;font-size:14px;color:var(--t);background:#fff;outline:none;font-family:inherit;margin-bottom:14px}
+.sinput:focus{border-color:#E8401C;box-shadow:0 0 0 2px rgba(232,64,28,.11)}
+.sbtn{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:7px;border:1px solid var(--bd2);background:transparent;color:var(--t);font-size:12px;cursor:pointer;font-family:inherit}
+.sbtn:hover{background:var(--bg2)}
+.sbtn-ac{background:#E8401C;color:#fff;border-color:transparent}
+.sbtn-ac:hover{background:#c73516}
+.notif{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1a1a1a;color:#fff;padding:9px 18px;border-radius:8px;font-size:13px;z-index:200;opacity:0;transition:opacity .2s;pointer-events:none;font-family:inherit;white-space:nowrap}
+.notif.show{opacity:1}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState,useRef}=React;
+
+const LS_KEY='pitlane_v2';
+const lsLoad=()=>{try{return JSON.parse(localStorage.getItem(LS_KEY))||[];}catch{return[];}};
+const lsSave=d=>{try{localStorage.setItem(LS_KEY,JSON.stringify(d));}catch{}};
+const fmtDate=ts=>{const d=new Date(ts);return d.toLocaleDateString('fr-FR',{day:'2-digit',month:'short',year:'numeric'})+' '+d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});};
+
+const CRM_VARS=[
+  {cat:'Contact',icon:'ti-user',vars:[
+    {tag:'%civilite%',label:'Civilite'},
+    {tag:'%firstName%',label:'Prenom'},
+    {tag:'%lastName%',label:'Nom'},
+    {tag:'%lead-id%',label:'Lead ID'},
+  ]},
+  {cat:'Vehicule',icon:'ti-car',vars:[
+    {tag:'%marque%',label:'Marque'},
+    {tag:'%modele%',label:'Modele'},
+    {tag:'%version%',label:'Version'},
+    {tag:'%kilometrage%',label:'Kilometrage'},
+    {tag:'%purchaseBrand%',label:"Marque d'interet"},
+    {tag:'%purchaseModel%',label:"Modele d'interet"},
+  ]},
+  {cat:'Offre & Bonus',icon:'ti-tag',vars:[
+    {tag:'%valuation%',label:'Montant reprise'},
+    {tag:'%bonus%',label:'Montant bonus'},
+    {tag:'%maxBonus%',label:'Bonus maximum'},
+    {tag:'%minBonus%',label:'Bonus minimum'},
+    {tag:'%endActiveBonus%',label:'Fin validite bonus'},
+    {tag:'%endDateValuation%',label:'Fin validite offre'},
+    {tag:'%expirationDay%',label:'Jour expiration'},
+    {tag:'%dateEndMonth%',label:'Fin du mois'},
+  ]},
+  {cat:'Concession',icon:'ti-building-store',vars:[
+    {tag:'%dealerName%',label:'Nom PDV'},
+    {tag:'%dealerAdresse%',label:'Adresse PDV'},
+    {tag:'%dealerCity%',label:'Ville PDV'},
+    {tag:'%dealerPhone%',label:'Tel PDV'},
+  ]},
+  {cat:'Medias & Logos',icon:'ti-photo',vars:[
+    {tag:'%brandlogo%',label:'Logo marque'},
+    {tag:'%logoX%',label:'Logo X'},
+    {tag:'%logoyoutube%',label:'Logo YouTube'},
+    {tag:'%logolinkedin%',label:'Logo LinkedIn'},
+    {tag:'%logoinstagram%',label:'Logo Instagram'},
+    {tag:'%logofacebook%',label:'Logo Facebook'},
+    {tag:'%logotiktok%',label:'Logo TikTok'},
+    {tag:'%imageheader%',label:'Image header'},
+    {tag:'%urlheader%',label:'URL header'},
+    {tag:'%imagelogo%',label:'Image logo'},
+    {tag:'%urllogo%',label:'URL logo'},
+    {tag:'%mirrorlink%',label:'URL miroir'},
+  ]},
+  {cat:'Phrases & Legales',icon:'ti-file-text',vars:[
+    {tag:'%phrase1%',label:'Phrase intro 1'},
+    {tag:'%phrase2%',label:'Phrase intro 2'},
+    {tag:'%pointdevente%',label:'Phrase PDV'},
+    {tag:'%prixfinal%',label:'Phrase prix final'},
+    {tag:'%suiveznous%',label:'Suivez-nous'},
+    {tag:'%loilom%',label:'Loi LOM'},
+  ]},
+];
+
+const MERGE=CRM_VARS.flatMap(c=>c.vars);
+
+const BTYPES=[
+  {type:'header',label:'En-tete',icon:'ti-layout-navbar'},
+  {type:'text',label:'Texte',icon:'ti-align-left'},
+  {type:'logo',label:'Logo',icon:'ti-brand-apple'},
+  {type:'image',label:'Image',icon:'ti-photo'},
+  {type:'button',label:'Bouton',icon:'ti-hand-click'},
+  {type:'divider',label:'Separateur',icon:'ti-minus'},
+  {type:'spacer',label:'Espacement',icon:'ti-space'},
+  {type:'columns',label:'2 Colonnes',icon:'ti-columns-2'},
+  {type:'social',label:'Reseaux sociaux',icon:'ti-share'},
+  {type:'html',label:'HTML libre',icon:'ti-code'},
+  {type:'footer',label:'Pied de page',icon:'ti-layout-bottombar'},
+];
+
+const DEF={
+  header:{title:'Bonjour {{prenom}} !',subtitle:'Decouvrez notre actualite',bg:'#E8401C',color:'#ffffff',align:'center',fontSize:26},
+  text:{content:'Votre texte ici. Cliquez pour modifier.',color:'#333333',fontSize:15,align:'left',padding:24},
+  logo:{src:'https://placehold.co/200x60/ffffff/cccccc?text=Logo',alt:'Logo',width:'180px',align:'center',link:'',padding:20,bg:'#ffffff'},
+  image:{src:'https://placehold.co/600x300/eeeeee/aaaaaa?text=Image',alt:'',width:'100%',align:'center',link:'',padding:0,bg:'#ffffff',caption:'',radius:0,cols:1,src2:'https://placehold.co/300x300/eeeeee/aaaaaa?text=Image+2',src3:'https://placehold.co/200x200/eeeeee/aaaaaa?text=Image+3',gap:8},
+  button:{label:'Decouvrir maintenant',url:'#',bg:'#E8401C',color:'#ffffff',align:'center',borderRadius:6,fontSize:15},
+  divider:{color:'#e0e0e0',thickness:1,padding:16},
+  spacer:{height:32},
+  columns:{col1:'Colonne 1',col2:'Colonne 2',bg:'#ffffff',color:'#333333',fontSize:14},
+  social:{twitter:'#',linkedin:'#',facebook:'#',instagram:'#',bg:'#ffffff',color:'#E8401C',align:'center'},
+  footer:{text:'© 2024 autobiz — Tous droits reserves.',unsubscribe:'Se desabonner',bg:'#f5f5f5',color:'#888888',fontSize:12,align:'center'},
+  html:{code:'<div style="padding:24px 32px;font-family:Arial,sans-serif"><p style="margin:0;color:#333">HTML libre</p></div>'},
+};
+
+/* ================================================================
+   MODULE LIBRARY — HTML modules ready to insert
+   Each module has: id, name, category, tag, html (export), preview (inline JSX render)
+================================================================ */
+const MODULES=[
+
+  /* ---- HERO ---- */
+  {id:'hero-dark',name:'Hero sombre',cat:'Hero',tag:'Impactant',
+   html:`<table width="100%" cellpadding="0" cellspacing="0" style="background:#111111"><tr><td style="padding:56px 40px;text-align:center"><p style="margin:0 0 8px;font-family:Arial,sans-serif;font-size:12px;font-weight:600;color:#E8401C;letter-spacing:2px;text-transform:uppercase">Nouveaute</p><h1 style="margin:0 0 16px;font-family:Arial,sans-serif;font-size:36px;font-weight:800;color:#ffffff;line-height:1.15">Votre titre<br/>percutant ici</h1><p style="margin:0 0 28px;font-family:Arial,sans-serif;font-size:16px;color:rgba(255,255,255,.65);line-height:1.6">Une accroche courte qui donne envie de cliquer. Simple, directe, efficace.</p><a href="#" style="display:inline-block;background:#E8401C;color:#fff;padding:14px 32px;border-radius:6px;font-family:Arial,sans-serif;font-size:15px;font-weight:700;text-decoration:none">Decouvrir maintenant</a></td></tr></table>`,
+   preview:<div style={{background:'#111',padding:'36px 24px',textAlign:'center'}}><div style={{fontSize:10,fontWeight:700,color:'#E8401C',letterSpacing:2,textTransform:'uppercase',marginBottom:6}}>Nouveaute</div><div style={{fontSize:22,fontWeight:800,color:'#fff',lineHeight:1.2,marginBottom:8}}>Votre titre percutant</div><div style={{fontSize:12,color:'rgba(255,255,255,.55)',marginBottom:14}}>Une accroche courte et efficace.</div><span style={{display:'inline-block',background:'#E8401C',color:'#fff',padding:'7px 18px',borderRadius:6,fontSize:12,fontWeight:700}}>Decouvrir</span></div>
+  },
+
+  {id:'hero-light',name:'Hero clair',cat:'Hero',tag:'Elegant',
+   html:`<table width="100%" cellpadding="0" cellspacing="0" style="background:#ffffff;border-bottom:3px solid #E8401C"><tr><td style="padding:48px 40px;text-align:center"><h1 style="margin:0 0 14px;font-family:Arial,sans-serif;font-size:32px;font-weight:800;color:#1a1a1a;line-height:1.2">Titre principal<br/>de votre email</h1><p style="margin:0 0 24px;font-family:Arial,sans-serif;font-size:15px;color:#666;line-height:1.7">Votre message cle en quelques mots. Allez a l'essentiel pour capter l'attention.</p><a href="#" style="display:inline-block;background:#1a1a1a;color:#fff;padding:13px 30px;border-radius:4px;font-family:Arial,sans-serif;font-size:14px;font-weight:700;text-decoration:none">En savoir plus</a></td></tr></table>`,
+   preview:<div style={{background:'#fff',borderBottom:'3px solid #E8401C',padding:'28px 20px',textAlign:'center'}}><div style={{fontSize:18,fontWeight:800,color:'#1a1a1a',lineHeight:1.2,marginBottom:8}}>Titre principal email</div><div style={{fontSize:12,color:'#666',marginBottom:12}}>Votre message cle.</div><span style={{display:'inline-block',background:'#1a1a1a',color:'#fff',padding:'6px 16px',borderRadius:4,fontSize:11,fontWeight:700}}>En savoir plus</span></div>
+  },
+
+  {id:'hero-gradient',name:'Hero degrade',cat:'Hero',tag:'Moderne',
+   html:`<table width="100%" cellpadding="0" cellspacing="0" style="background:#1a0533"><tr><td style="padding:52px 40px;text-align:center;background:linear-gradient(135deg,#1a0533 0%,#E8401C 100%)"><p style="margin:0 0 12px;font-family:Arial,sans-serif;font-size:11px;font-weight:600;color:rgba(255,255,255,.6);letter-spacing:3px;text-transform:uppercase">Edition speciale</p><h1 style="margin:0 0 16px;font-family:Arial,sans-serif;font-size:34px;font-weight:800;color:#ffffff;line-height:1.2">Le futur commence<br/>aujourd'hui</h1><p style="margin:0 0 26px;font-family:Arial,sans-serif;font-size:15px;color:rgba(255,255,255,.75);line-height:1.65">Rejoignez des milliers de professionnels qui font confiance a notre solution.</p><a href="#" style="display:inline-block;background:#ffffff;color:#1a0533;padding:13px 32px;border-radius:30px;font-family:Arial,sans-serif;font-size:14px;font-weight:700;text-decoration:none">Commencer maintenant</a></td></tr></table>`,
+   preview:<div style={{background:'linear-gradient(135deg,#1a0533,#E8401C)',padding:'30px 20px',textAlign:'center'}}><div style={{fontSize:9,color:'rgba(255,255,255,.6)',letterSpacing:3,textTransform:'uppercase',marginBottom:6}}>Edition speciale</div><div style={{fontSize:18,fontWeight:800,color:'#fff',lineHeight:1.2,marginBottom:8}}>Le futur commence aujourd'hui</div><span style={{display:'inline-block',background:'#fff',color:'#1a0533',padding:'6px 18px',borderRadius:30,fontSize:11,fontWeight:700}}>Commencer</span></div>
+  },
+
+  /* ---- PRODUIT ---- */
+  {id:'product-card',name:'Carte produit',cat:'Produit',tag:'E-commerce',
+   html:`<table width="100%" cellpadding="0" cellspacing="0" style="background:#ffffff"><tr><td style="padding:0"><img src="https://placehold.co/600x280/f5f5f5/cccccc?text=Photo+produit" alt="Produit" style="width:100%;display:block"/></td></tr><tr><td style="padding:28px 32px"><p style="margin:0 0 4px;font-family:Arial,sans-serif;font-size:11px;font-weight:600;color:#E8401C;letter-spacing:1.5px;text-transform:uppercase">Nouveaute</p><h2 style="margin:0 0 10px;font-family:Arial,sans-serif;font-size:24px;font-weight:700;color:#1a1a1a">Nom du produit</h2><p style="margin:0 0 6px;font-family:Arial,sans-serif;font-size:22px;font-weight:800;color:#E8401C">149 €</p><p style="margin:0 0 20px;font-family:Arial,sans-serif;font-size:14px;color:#666;line-height:1.6">Description courte du produit. Mettez en avant les benefices cles pour convaincre rapidement.</p><a href="#" style="display:inline-block;background:#E8401C;color:#fff;padding:12px 28px;border-radius:5px;font-family:Arial,sans-serif;font-size:14px;font-weight:700;text-decoration:none">Voir le produit</a></td></tr></table>`,
+   preview:<div style={{background:'#fff'}}><div style={{height:60,background:'#f5f5f5',display:'flex',alignItems:'center',justifyContent:'center',fontSize:10,color:'#bbb'}}>Photo produit</div><div style={{padding:'10px 14px'}}><div style={{fontSize:8,fontWeight:700,color:'#E8401C',letterSpacing:1,textTransform:'uppercase',marginBottom:3}}>Nouveaute</div><div style={{fontSize:13,fontWeight:700,color:'#1a1a1a',marginBottom:2}}>Nom du produit</div><div style={{fontSize:13,fontWeight:800,color:'#E8401C',marginBottom:5}}>149 €</div><span style={{display:'inline-block',background:'#E8401C',color:'#fff',padding:'4px 12px',borderRadius:4,fontSize:10,fontWeight:700}}>Voir</span></div></div>
+  },
+
+  {id:'product-2col',name:'2 produits cote a cote',cat:'Produit',tag:'E-commerce',
+   html:`<table width="100%" cellpadding="0" cellspacing="0" style="background:#f9f9f9"><tr><td style="padding:24px 20px"><table width="100%" cellpadding="0" cellspacing="0"><tr><td width="48%" style="vertical-align:top;background:#fff;border-radius:6px;overflow:hidden;padding:0"><img src="https://placehold.co/270x180/f0f0f0/cccccc?text=Produit+1" alt="P1" style="width:100%;display:block"/><div style="padding:16px"><p style="margin:0 0 4px;font-family:Arial,sans-serif;font-size:13px;font-weight:600;color:#1a1a1a">Produit 1</p><p style="margin:0 0 10px;font-family:Arial,sans-serif;font-size:14px;font-weight:800;color:#E8401C">89 €</p><a href="#" style="display:inline-block;background:#E8401C;color:#fff;padding:8px 16px;border-radius:4px;font-family:Arial,sans-serif;font-size:12px;font-weight:600;text-decoration:none">Acheter</a></div></td><td width="4%"></td><td width="48%" style="vertical-align:top;background:#fff;border-radius:6px;overflow:hidden;padding:0"><img src="https://placehold.co/270x180/f0f0f0/cccccc?text=Produit+2" alt="P2" style="width:100%;display:block"/><div style="padding:16px"><p style="margin:0 0 4px;font-family:Arial,sans-serif;font-size:13px;font-weight:600;color:#1a1a1a">Produit 2</p><p style="margin:0 0 10px;font-family:Arial,sans-serif;font-size:14px;font-weight:800;color:#E8401C">129 €</p><a href="#" style="display:inline-block;background:#E8401C;color:#fff;padding:8px 16px;border-radius:4px;font-family:Arial,sans-serif;font-size:12px;font-weight:600;text-decoration:none">Acheter</a></div></td></tr></table></td></tr></table>`,
+   preview:<div style={{background:'#f9f9f9',padding:'8px'}}><div style={{display:'flex',gap:6}}>{['P1','P2'].map(p=><div key={p} style={{flex:1,background:'#fff',borderRadius:5,overflow:'hidden'}}><div style={{height:36,background:'#f0f0f0',display:'flex',alignItems:'center',justifyContent:'center',fontSize:9,color:'#bbb'}}>{p}</div><div style={{padding:'6px 8px'}}><div style={{fontSize:10,fontWeight:700,color:'#1a1a1a',marginBottom:2}}>Produit {p.slice(-1)}</div><div style={{fontSize:10,fontWeight:800,color:'#E8401C',marginBottom:4}}>89 €</div><span style={{display:'inline-block',background:'#E8401C',color:'#fff',padding:'2px 8px',borderRadius:3,fontSize:9,fontWeight:700}}>Acheter</span></div></div>)}</div></div>
+  },
+
+  /* ---- PROMO ---- */
+  {id:'promo-banner',name:'Banniere promo',cat:'Promo',tag:'Urgence',
+   html:`<table width="100%" cellpadding="0" cellspacing="0" style="background:#E8401C"><tr><td style="padding:32px 40px;text-align:center"><p style="margin:0 0 6px;font-family:Arial,sans-serif;font-size:12px;font-weight:600;color:rgba(255,255,255,.75);letter-spacing:2px;text-transform:uppercase">Offre limitee</p><h2 style="margin:0 0 8px;font-family:Arial,sans-serif;font-size:40px;font-weight:900;color:#ffffff;line-height:1">-30%</h2><p style="margin:0 0 20px;font-family:Arial,sans-serif;font-size:15px;color:rgba(255,255,255,.9)">Sur tout le catalogue — valable jusqu'au 31 mai</p><a href="#" style="display:inline-block;background:#ffffff;color:#E8401C;padding:12px 30px;border-radius:30px;font-family:Arial,sans-serif;font-size:14px;font-weight:800;text-decoration:none">J'en profite</a></td></tr></table>`,
+   preview:<div style={{background:'#E8401C',padding:'20px',textAlign:'center'}}><div style={{fontSize:10,color:'rgba(255,255,255,.7)',letterSpacing:2,textTransform:'uppercase',marginBottom:4}}>Offre limitee</div><div style={{fontSize:32,fontWeight:900,color:'#fff',lineHeight:1,marginBottom:6}}>-30%</div><div style={{fontSize:11,color:'rgba(255,255,255,.85)',marginBottom:10}}>Sur tout le catalogue</div><span style={{display:'inline-block',background:'#fff',color:'#E8401C',padding:'5px 16px',borderRadius:20,fontSize:11,fontWeight:800}}>J'en profite</span></div>
+  },
+
+  {id:'promo-code',name:'Code promo',cat:'Promo',tag:'Coupon',
+   html:`<table width="100%" cellpadding="0" cellspacing="0" style="background:#fff9f8"><tr><td style="padding:32px 40px;text-align:center"><p style="margin:0 0 12px;font-family:Arial,sans-serif;font-size:15px;color:#333">Utilisez ce code exclusif pour obtenir</p><p style="margin:0 0 16px;font-family:Arial,sans-serif;font-size:28px;font-weight:800;color:#E8401C">-20% sur votre commande</p><table cellpadding="0" cellspacing="0" style="margin:0 auto 20px"><tr><td style="border:2px dashed #E8401C;border-radius:8px;padding:14px 32px"><span style="font-family:'Courier New',monospace;font-size:24px;font-weight:700;color:#1a1a1a;letter-spacing:4px">PITLANE20</span></td></tr></table><p style="margin:0;font-family:Arial,sans-serif;font-size:12px;color:#999">Valable jusqu'au 31/05/2024 — une utilisation par compte</p></td></tr></table>`,
+   preview:<div style={{background:'#fff9f8',padding:'16px',textAlign:'center'}}><div style={{fontSize:11,color:'#333',marginBottom:6}}>Code exclusif : <strong style={{color:'#E8401C'}}>-20%</strong></div><div style={{border:'2px dashed #E8401C',borderRadius:6,padding:'8px 16px',display:'inline-block',marginBottom:6}}><span style={{fontFamily:'monospace',fontSize:15,fontWeight:700,letterSpacing:3,color:'#1a1a1a'}}>PITLANE20</span></div><div style={{fontSize:9,color:'#999'}}>Valable jusqu'au 31/05/2024</div></div>
+  },
+
+  /* ---- TEMOIGNAGE ---- */
+  {id:'testimonial-simple',name:'Temoignage simple',cat:'Temoignage',tag:'Social proof',
+   html:`<table width="100%" cellpadding="0" cellspacing="0" style="background:#f9f9f9"><tr><td style="padding:36px 40px"><p style="margin:0 0 20px;font-family:Georgia,serif;font-size:19px;color:#1a1a1a;line-height:1.65;font-style:italic">"Grace a cette solution, nous avons multiplie notre taux d'ouverture par 2 en seulement 3 mois. Simple, rapide, et vraiment efficace."</p><table cellpadding="0" cellspacing="0"><tr><td style="width:44px;height:44px;border-radius:50%;background:#E8401C;text-align:center;vertical-align:middle;font-family:Arial,sans-serif;font-size:16px;font-weight:700;color:#fff">SM</td><td style="padding-left:12px"><p style="margin:0;font-family:Arial,sans-serif;font-size:14px;font-weight:700;color:#1a1a1a">Sophie Martin</p><p style="margin:0;font-family:Arial,sans-serif;font-size:12px;color:#888">Directrice Marketing, Acme Corp</p></td></tr></table></td></tr></table>`,
+   preview:<div style={{background:'#f9f9f9',padding:'14px 16px'}}><div style={{fontFamily:'Georgia,serif',fontSize:12,fontStyle:'italic',color:'#1a1a1a',lineHeight:1.6,marginBottom:10}}>"Grace a cette solution, nous avons multiplie notre taux d'ouverture par 2."</div><div style={{display:'flex',alignItems:'center',gap:8}}><div style={{width:28,height:28,borderRadius:'50%',background:'#E8401C',display:'flex',alignItems:'center',justifyContent:'center',fontSize:10,fontWeight:700,color:'#fff',flexShrink:0}}>SM</div><div><div style={{fontSize:10,fontWeight:700,color:'#1a1a1a'}}>Sophie Martin</div><div style={{fontSize:9,color:'#888'}}>Directrice Marketing</div></div></div></div>
+  },
+
+  {id:'testimonial-stars',name:'Temoignage avec etoiles',cat:'Temoignage',tag:'Note',
+   html:`<table width="100%" cellpadding="0" cellspacing="0" style="background:#ffffff;border-left:4px solid #E8401C"><tr><td style="padding:28px 32px"><p style="margin:0 0 8px;font-family:Arial,sans-serif;font-size:20px;color:#E8401C">★★★★★</p><p style="margin:0 0 16px;font-family:Georgia,serif;font-size:16px;color:#333;line-height:1.7;font-style:italic">"Un outil indispensable pour notre equipe. L'onboarding est rapide et les resultats sont au rendez-vous."</p><p style="margin:0;font-family:Arial,sans-serif;font-size:13px;font-weight:600;color:#1a1a1a">Thomas Dupont <span style="color:#999;font-weight:400">— CEO, StartupXYZ</span></p></td></tr></table>`,
+   preview:<div style={{background:'#fff',borderLeft:'3px solid #E8401C',padding:'12px 14px'}}><div style={{fontSize:14,color:'#E8401C',marginBottom:5}}>★★★★★</div><div style={{fontFamily:'Georgia,serif',fontSize:11,fontStyle:'italic',color:'#333',lineHeight:1.6,marginBottom:8}}>"Un outil indispensable pour notre equipe."</div><div style={{fontSize:10,fontWeight:600,color:'#1a1a1a'}}>Thomas Dupont <span style={{color:'#999',fontWeight:400}}>— CEO</span></div></div>
+  },
+
+  /* ---- STATS ---- */
+  {id:'stats-3col',name:'3 statistiques',cat:'Chiffres',tag:'Impact',
+   html:`<table width="100%" cellpadding="0" cellspacing="0" style="background:#1a1a1a"><tr><td style="padding:36px 20px"><table width="100%" cellpadding="0" cellspacing="0"><tr><td width="33%" style="text-align:center;padding:0 10px;border-right:1px solid rgba(255,255,255,.1)"><p style="margin:0 0 4px;font-family:Arial,sans-serif;font-size:36px;font-weight:800;color:#E8401C">98%</p><p style="margin:0;font-family:Arial,sans-serif;font-size:12px;color:rgba(255,255,255,.6);line-height:1.5">Taux de satisfaction client</p></td><td width="33%" style="text-align:center;padding:0 10px;border-right:1px solid rgba(255,255,255,.1)"><p style="margin:0 0 4px;font-family:Arial,sans-serif;font-size:36px;font-weight:800;color:#E8401C">+50k</p><p style="margin:0;font-family:Arial,sans-serif;font-size:12px;color:rgba(255,255,255,.6);line-height:1.5">Utilisateurs actifs</p></td><td width="33%" style="text-align:center;padding:0 10px"><p style="margin:0 0 4px;font-family:Arial,sans-serif;font-size:36px;font-weight:800;color:#E8401C">3x</p><p style="margin:0;font-family:Arial,sans-serif;font-size:12px;color:rgba(255,255,255,.6);line-height:1.5">Plus rapide que la concurrence</p></td></tr></table></td></tr></table>`,
+   preview:<div style={{background:'#1a1a1a',padding:'12px'}}><div style={{display:'flex',gap:6}}>{[['98%','Satisfaction'],['50k','Utilisateurs'],['3x','Plus rapide']].map(([n,l])=><div key={n} style={{flex:1,textAlign:'center',padding:'4px 0',borderRight:'1px solid rgba(255,255,255,.1)'}}><div style={{fontSize:16,fontWeight:800,color:'#E8401C'}}>{n}</div><div style={{fontSize:8,color:'rgba(255,255,255,.5)',marginTop:2,lineHeight:1.3}}>{l}</div></div>)}</div></div>
+  },
+
+  /* ---- ANNONCE ---- */
+  {id:'annonce-voiture',name:'Annonce vehicule',cat:'Automobile',tag:'autobiz',
+   html:`<table width="100%" cellpadding="0" cellspacing="0" style="background:#ffffff;border:1px solid #e8e8e8"><tr><td><img src="https://placehold.co/600x240/f0f0f0/999999?text=Photo+vehicule" alt="Vehicule" style="width:100%;display:block"/></td></tr><tr><td style="padding:20px 24px"><table width="100%" cellpadding="0" cellspacing="0"><tr><td><h2 style="margin:0 0 4px;font-family:Arial,sans-serif;font-size:20px;font-weight:700;color:#1a1a1a">Peugeot 308 GT Line</h2><p style="margin:0 0 12px;font-family:Arial,sans-serif;font-size:13px;color:#888">2022 · 28 000 km · Diesel · Automatique</p><table cellpadding="0" cellspacing="0"><tr><td style="padding-right:16px"><p style="margin:0;font-family:Arial,sans-serif;font-size:11px;color:#888">Kilometrage</p><p style="margin:0;font-family:Arial,sans-serif;font-size:14px;font-weight:700;color:#1a1a1a">28 000 km</p></td><td style="padding-right:16px"><p style="margin:0;font-family:Arial,sans-serif;font-size:11px;color:#888">Annee</p><p style="margin:0;font-family:Arial,sans-serif;font-size:14px;font-weight:700;color:#1a1a1a">2022</p></td><td><p style="margin:0;font-family:Arial,sans-serif;font-size:11px;color:#888">Energie</p><p style="margin:0;font-family:Arial,sans-serif;font-size:14px;font-weight:700;color:#1a1a1a">Diesel</p></td></tr></table></td><td style="text-align:right;vertical-align:bottom"><p style="margin:0 0 8px;font-family:Arial,sans-serif;font-size:26px;font-weight:800;color:#E8401C">22 900 €</p><a href="#" style="display:inline-block;background:#E8401C;color:#fff;padding:10px 20px;border-radius:5px;font-family:Arial,sans-serif;font-size:13px;font-weight:700;text-decoration:none">Voir l'annonce</a></td></tr></table></td></tr></table>`,
+   preview:<div style={{background:'#fff',border:'1px solid #e8e8e8'}}><div style={{height:55,background:'#f0f0f0',display:'flex',alignItems:'center',justifyContent:'center',fontSize:10,color:'#bbb'}}>Photo vehicule</div><div style={{padding:'8px 12px',display:'flex',alignItems:'flex-end',justifyContent:'space-between'}}><div><div style={{fontSize:12,fontWeight:700,color:'#1a1a1a',marginBottom:2}}>Peugeot 308 GT Line</div><div style={{fontSize:9,color:'#888',marginBottom:6}}>2022 · 28 000 km · Diesel</div><div style={{display:'flex',gap:10}}>{['28k km','2022','Diesel'].map(v=><div key={v} style={{fontSize:9,color:'#1a1a1a',fontWeight:700}}>{v}</div>)}</div></div><div style={{textAlign:'right'}}><div style={{fontSize:16,fontWeight:800,color:'#E8401C',marginBottom:5}}>22 900 €</div><span style={{display:'inline-block',background:'#E8401C',color:'#fff',padding:'4px 10px',borderRadius:4,fontSize:9,fontWeight:700}}>Voir</span></div></div></div>
+  },
+
+  {id:'annonce-list',name:'Liste annonces',cat:'Automobile',tag:'autobiz',
+   html:`<table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f5f5;padding:16px"><tr><td style="padding:8px 0"><table width="100%" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:6px;margin-bottom:10px"><tr><td width="140" style="padding:0"><img src="https://placehold.co/140x100/eeeeee/bbbbbb?text=Photo" alt="V1" style="width:140px;height:100px;object-fit:cover;display:block;border-radius:6px 0 0 6px"/></td><td style="padding:14px 16px"><p style="margin:0 0 2px;font-family:Arial,sans-serif;font-size:14px;font-weight:700;color:#1a1a1a">Renault Clio 1.0 TCe</p><p style="margin:0 0 8px;font-family:Arial,sans-serif;font-size:12px;color:#999">2021 · 35 000 km · Essence</p><p style="margin:0;font-family:Arial,sans-serif;font-size:18px;font-weight:800;color:#E8401C">13 500 €</p></td><td style="padding:14px 16px;text-align:right;vertical-align:middle"><a href="#" style="display:inline-block;background:#E8401C;color:#fff;padding:8px 16px;border-radius:4px;font-family:Arial,sans-serif;font-size:12px;font-weight:600;text-decoration:none;white-space:nowrap">Voir</a></td></tr></table><table width="100%" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:6px;margin-bottom:10px"><tr><td width="140" style="padding:0"><img src="https://placehold.co/140x100/eeeeee/bbbbbb?text=Photo" alt="V2" style="width:140px;height:100px;object-fit:cover;display:block;border-radius:6px 0 0 6px"/></td><td style="padding:14px 16px"><p style="margin:0 0 2px;font-family:Arial,sans-serif;font-size:14px;font-weight:700;color:#1a1a1a">Volkswagen Golf VIII</p><p style="margin:0 0 8px;font-family:Arial,sans-serif;font-size:12px;color:#999">2022 · 18 000 km · Hybride</p><p style="margin:0;font-family:Arial,sans-serif;font-size:18px;font-weight:800;color:#E8401C">28 900 €</p></td><td style="padding:14px 16px;text-align:right;vertical-align:middle"><a href="#" style="display:inline-block;background:#E8401C;color:#fff;padding:8px 16px;border-radius:4px;font-family:Arial,sans-serif;font-size:12px;font-weight:600;text-decoration:none;white-space:nowrap">Voir</a></td></tr></table></td></tr></table>`,
+   preview:<div style={{background:'#f5f5f5',padding:'8px'}}>{['Renault Clio — 13 500 €','Volkswagen Golf — 28 900 €'].map((v,i)=><div key={i} style={{background:'#fff',borderRadius:5,display:'flex',alignItems:'center',gap:8,padding:'6px 8px',marginBottom:5}}><div style={{width:40,height:30,background:'#eee',borderRadius:3,flexShrink:0,display:'flex',alignItems:'center',justifyContent:'center',fontSize:8,color:'#bbb'}}>img</div><div style={{flex:1,fontSize:9,fontWeight:600,color:'#1a1a1a'}}>{v}</div><span style={{background:'#E8401C',color:'#fff',padding:'2px 7px',borderRadius:3,fontSize:9,fontWeight:700}}>Voir</span></div>)}</div>
+  },
+
+  /* ---- CTA ---- */
+  {id:'cta-simple',name:'CTA simple',cat:'Appel a action',tag:'Conversion',
+   html:`<table width="100%" cellpadding="0" cellspacing="0" style="background:#ffffff"><tr><td style="padding:36px 40px;text-align:center"><h2 style="margin:0 0 10px;font-family:Arial,sans-serif;font-size:24px;font-weight:700;color:#1a1a1a">Pret a passer a la vitesse superieure ?</h2><p style="margin:0 0 22px;font-family:Arial,sans-serif;font-size:14px;color:#666;line-height:1.6">Rejoignez plus de 10 000 professionnels qui utilisent deja Pitlane au quotidien.</p><a href="#" style="display:inline-block;background:#E8401C;color:#fff;padding:14px 36px;border-radius:6px;font-family:Arial,sans-serif;font-size:15px;font-weight:700;text-decoration:none">Commencer gratuitement</a><p style="margin:12px 0 0;font-family:Arial,sans-serif;font-size:11px;color:#bbb">Sans engagement · Annulable a tout moment</p></td></tr></table>`,
+   preview:<div style={{padding:'16px 20px',textAlign:'center'}}><div style={{fontSize:13,fontWeight:700,color:'#1a1a1a',marginBottom:6}}>Pret a passer a la vitesse superieure ?</div><div style={{fontSize:11,color:'#666',marginBottom:10}}>Rejoignez 10 000 professionnels.</div><span style={{display:'inline-block',background:'#E8401C',color:'#fff',padding:'7px 20px',borderRadius:6,fontSize:11,fontWeight:700}}>Commencer</span><div style={{fontSize:9,color:'#bbb',marginTop:6}}>Sans engagement</div></div>
+  },
+
+  {id:'cta-dark',name:'CTA sombre',cat:'Appel a action',tag:'Conversion',
+   html:`<table width="100%" cellpadding="0" cellspacing="0" style="background:#111111"><tr><td style="padding:40px;text-align:center"><p style="margin:0 0 6px;font-family:Arial,sans-serif;font-size:11px;font-weight:600;color:#E8401C;letter-spacing:2px;text-transform:uppercase">Derniere chance</p><h2 style="margin:0 0 12px;font-family:Arial,sans-serif;font-size:26px;font-weight:800;color:#ffffff">Ne manquez pas cette offre</h2><p style="margin:0 0 24px;font-family:Arial,sans-serif;font-size:14px;color:rgba(255,255,255,.6);line-height:1.6">L'offre expire dans 48h. Profitez-en avant qu'il ne soit trop tard.</p><a href="#" style="display:inline-block;background:#E8401C;color:#fff;padding:13px 32px;border-radius:6px;font-family:Arial,sans-serif;font-size:14px;font-weight:700;text-decoration:none;margin-right:10px">J'en profite</a><a href="#" style="display:inline-block;border:1px solid rgba(255,255,255,.3);color:rgba(255,255,255,.7);padding:13px 24px;border-radius:6px;font-family:Arial,sans-serif;font-size:14px;text-decoration:none">En savoir plus</a></td></tr></table>`,
+   preview:<div style={{background:'#111',padding:'16px',textAlign:'center'}}><div style={{fontSize:9,color:'#E8401C',letterSpacing:2,textTransform:'uppercase',marginBottom:4}}>Derniere chance</div><div style={{fontSize:14,fontWeight:800,color:'#fff',marginBottom:8}}>Ne manquez pas cette offre</div><div style={{display:'flex',gap:6,justifyContent:'center'}}><span style={{background:'#E8401C',color:'#fff',padding:'5px 12px',borderRadius:5,fontSize:10,fontWeight:700}}>J'en profite</span><span style={{border:'1px solid rgba(255,255,255,.3)',color:'rgba(255,255,255,.7)',padding:'5px 10px',borderRadius:5,fontSize:10}}>Plus d'infos</span></div></div>
+  },
+
+  /* ---- CONTENU ---- */
+  {id:'article-preview',name:'Apercu article',cat:'Contenu',tag:'Blog',
+   html:`<table width="100%" cellpadding="0" cellspacing="0" style="background:#ffffff"><tr><td><img src="https://placehold.co/600x220/f5f5f5/cccccc?text=Image+article" alt="Article" style="width:100%;display:block"/></td></tr><tr><td style="padding:24px 32px"><p style="margin:0 0 8px;font-family:Arial,sans-serif;font-size:11px;font-weight:600;color:#E8401C;text-transform:uppercase;letter-spacing:1px">Tendances marche</p><h2 style="margin:0 0 10px;font-family:Arial,sans-serif;font-size:21px;font-weight:700;color:#1a1a1a;line-height:1.3">Le marche de l'occasion repart a la hausse en 2024</h2><p style="margin:0 0 16px;font-family:Arial,sans-serif;font-size:14px;color:#666;line-height:1.7">Apres une annee difficile, les indicateurs montrent un rebond significatif des ventes de vehicules d'occasion en France. Voici ce que cela signifie pour les professionnels.</p><a href="#" style="font-family:Arial,sans-serif;font-size:13px;font-weight:600;color:#E8401C;text-decoration:none">Lire la suite →</a></td></tr></table>`,
+   preview:<div style={{background:'#fff'}}><div style={{height:50,background:'#f5f5f5',display:'flex',alignItems:'center',justifyContent:'center',fontSize:10,color:'#bbb'}}>Image article</div><div style={{padding:'10px 14px'}}><div style={{fontSize:8,fontWeight:700,color:'#E8401C',letterSpacing:1,textTransform:'uppercase',marginBottom:3}}>Tendances marche</div><div style={{fontSize:12,fontWeight:700,color:'#1a1a1a',lineHeight:1.3,marginBottom:5}}>Le marche repart a la hausse en 2024</div><div style={{fontSize:9,color:'#666',lineHeight:1.5,marginBottom:6}}>Apres une annee difficile, les indicateurs montrent un rebond...</div><div style={{fontSize:10,fontWeight:600,color:'#E8401C'}}>Lire la suite →</div></div></div>
+  },
+
+  {id:'feature-list',name:'Liste fonctionnalites',cat:'Contenu',tag:'Produit',
+   html:`<table width="100%" cellpadding="0" cellspacing="0" style="background:#ffffff"><tr><td style="padding:28px 32px"><h2 style="margin:0 0 20px;font-family:Arial,sans-serif;font-size:20px;font-weight:700;color:#1a1a1a;text-align:center">Ce qui est inclus</h2><table width="100%" cellpadding="0" cellspacing="0">${[['Acces illimite a la base de donnees','ti-database'],['Alertes en temps reel par email','ti-bell'],['Rapports et statistiques avances','ti-chart-bar'],['Support prioritaire 7j/7','ti-headset']].map(([t,_])=>`<tr><td style="padding:10px 0;border-bottom:1px solid #f0f0f0"><table cellpadding="0" cellspacing="0"><tr><td style="width:28px;height:28px;background:#fff0ed;border-radius:6px;text-align:center;vertical-align:middle"><span style="font-family:Arial;font-size:14px;color:#E8401C">✓</span></td><td style="padding-left:12px;font-family:Arial,sans-serif;font-size:14px;color:#333">${t}</td></tr></table></td></tr>`).join('')}</table></td></tr></table>`,
+   preview:<div style={{padding:'12px 14px'}}><div style={{fontSize:12,fontWeight:700,color:'#1a1a1a',textAlign:'center',marginBottom:8}}>Ce qui est inclus</div>{['Base de donnees illimitee','Alertes temps reel','Rapports avances','Support 7j/7'].map(t=><div key={t} style={{display:'flex',alignItems:'center',gap:7,padding:'4px 0',borderBottom:'1px solid #f5f5f5'}}><div style={{width:18,height:18,background:'#fff0ed',borderRadius:4,display:'flex',alignItems:'center',justifyContent:'center',fontSize:10,color:'#E8401C',flexShrink:0}}>✓</div><div style={{fontSize:10,color:'#333'}}>{t}</div></div>)}</div>
+  },
+
+  /* ---- COMPTE A REBOURS ---- */
+  {id:'countdown',name:'Compte a rebours',cat:'Urgence',tag:'Timer',
+   html:`<table width="100%" cellpadding="0" cellspacing="0" style="background:#1a1a1a"><tr><td style="padding:32px 20px;text-align:center"><p style="margin:0 0 20px;font-family:Arial,sans-serif;font-size:15px;color:rgba(255,255,255,.75)">L'offre se termine dans</p><table cellpadding="0" cellspacing="0" style="margin:0 auto 20px"><tr><td style="text-align:center;padding:0 8px"><div style="background:#E8401C;border-radius:8px;padding:12px 20px;min-width:60px"><p style="margin:0;font-family:Arial,sans-serif;font-size:32px;font-weight:800;color:#fff;line-height:1">02</p><p style="margin:4px 0 0;font-family:Arial,sans-serif;font-size:10px;color:rgba(255,255,255,.7);letter-spacing:1px;text-transform:uppercase">Jours</p></div></td><td style="font-family:Arial,sans-serif;font-size:28px;font-weight:700;color:#fff;padding:0 4px">:</td><td style="text-align:center;padding:0 8px"><div style="background:#E8401C;border-radius:8px;padding:12px 20px;min-width:60px"><p style="margin:0;font-family:Arial,sans-serif;font-size:32px;font-weight:800;color:#fff;line-height:1">14</p><p style="margin:4px 0 0;font-family:Arial,sans-serif;font-size:10px;color:rgba(255,255,255,.7);letter-spacing:1px;text-transform:uppercase">Heures</p></div></td><td style="font-family:Arial,sans-serif;font-size:28px;font-weight:700;color:#fff;padding:0 4px">:</td><td style="text-align:center;padding:0 8px"><div style="background:#E8401C;border-radius:8px;padding:12px 20px;min-width:60px"><p style="margin:0;font-family:Arial,sans-serif;font-size:32px;font-weight:800;color:#fff;line-height:1">37</p><p style="margin:4px 0 0;font-family:Arial,sans-serif;font-size:10px;color:rgba(255,255,255,.7);letter-spacing:1px;text-transform:uppercase">Minutes</p></div></td></tr></table><a href="#" style="display:inline-block;background:#E8401C;color:#fff;padding:13px 32px;border-radius:6px;font-family:Arial,sans-serif;font-size:14px;font-weight:700;text-decoration:none">Profiter de l'offre</a></td></tr></table>`,
+   preview:<div style={{background:'#1a1a1a',padding:'14px',textAlign:'center'}}><div style={{fontSize:10,color:'rgba(255,255,255,.7)',marginBottom:8}}>L'offre se termine dans</div><div style={{display:'flex',justifyContent:'center',gap:4,marginBottom:10}}>{[['02','Jours'],['14','H'],['37','Min']].map(([n,l])=><div key={l} style={{background:'#E8401C',borderRadius:5,padding:'5px 9px',textAlign:'center'}}><div style={{fontSize:16,fontWeight:800,color:'#fff'}}>{n}</div><div style={{fontSize:7,color:'rgba(255,255,255,.7)',textTransform:'uppercase'}}>{l}</div></div>)}</div><span style={{display:'inline-block',background:'#E8401C',color:'#fff',padding:'5px 14px',borderRadius:5,fontSize:10,fontWeight:700}}>Profiter</span></div>
+  },
+];
+
+const MODULE_CATS=[...new Set(MODULES.map(m=>m.cat))];
+
+const TMPLS=[
+  {name:'Newsletter',color:'#E8401C',blocks:[
+    {type:'logo',props:{src:'https://placehold.co/200x60/f9f9f9/cccccc?text=Logo',alt:'Logo',width:'160px',align:'center',link:'',padding:20,bg:'#ffffff'}},
+    {type:'header',props:{title:'Notre Newsletter',subtitle:'Edition mai 2024',bg:'#E8401C',color:'#fff',align:'center',fontSize:26}},
+    {type:'text',props:{content:'Bonjour {{prenom}},\n\nMerci de nous suivre ! Voici les actualites du mois.',color:'#333',fontSize:15,align:'left',padding:24}},
+    {type:'image',props:{src:'https://placehold.co/600x280/e8e8e8/aaaaaa?text=Image',alt:'',width:'100%',align:'center',link:'',padding:0,bg:'#fff',caption:''}},
+    {type:'button',props:{label:'Lire la suite',url:'#',bg:'#E8401C',color:'#fff',align:'center',borderRadius:6,fontSize:15}},
+    {type:'footer',props:{text:'© 2024 autobiz',unsubscribe:'Se desabonner',bg:'#f5f5f5',color:'#888',fontSize:12,align:'center'}},
+  ]},
+  {name:'Promo',color:'#1a1a1a',blocks:[
+    {type:'logo',props:{src:'https://placehold.co/200x60/1a1a1a/ffffff?text=Logo',alt:'Logo',width:'140px',align:'center',link:'',padding:20,bg:'#1a1a1a'}},
+    {type:'header',props:{title:'OFFRE SPECIALE',subtitle:'-30% sur tout le catalogue',bg:'#1a1a1a',color:'#fff',align:'center',fontSize:28}},
+    {type:'text',props:{content:'Bonjour {{prenom}}, profitez de notre offre valable 48h seulement !',color:'#333',fontSize:15,align:'center',padding:24}},
+    {type:'button',props:{label:"J'en profite",url:'#',bg:'#E8401C',color:'#fff',align:'center',borderRadius:30,fontSize:16}},
+    {type:'footer',props:{text:'© 2024 autobiz',unsubscribe:'Se desabonner',bg:'#f5f5f5',color:'#888',fontSize:12,align:'center'}},
+  ]},
+  {name:'Bienvenue',color:'#1D9E75',blocks:[
+    {type:'logo',props:{src:'https://placehold.co/200x60/f9f9f9/cccccc?text=Logo',alt:'Logo',width:'160px',align:'center',link:'',padding:20,bg:'#ffffff'}},
+    {type:'header',props:{title:'Bienvenue {{prenom}} !',subtitle:'Nous sommes ravis de vous accueillir',bg:'#1D9E75',color:'#fff',align:'center',fontSize:24}},
+    {type:'text',props:{content:'Votre compte a bien ete cree.',color:'#333',fontSize:15,align:'left',padding:24}},
+    {type:'button',props:{label:'Acceder a mon espace',url:'#',bg:'#1D9E75',color:'#fff',align:'center',borderRadius:6,fontSize:15}},
+    {type:'footer',props:{text:'© 2024 autobiz',unsubscribe:'Se desabonner',bg:'#f5f5f5',color:'#888',fontSize:12,align:'center'}},
+  ]},
+];
+
+let _uid=1;
+const uid=()=>`b${_uid++}`;
+const cloneB=b=>({...b,id:uid(),props:{...b.props}});
+const fmtAl=v=>v==='center'?'margin:0 auto':v==='right'?'margin:0 0 0 auto':'margin:0';
+
+function renderBlock(b){
+  const p=b.props;
+  switch(b.type){
+    case'header':return`<table width="100%" cellpadding="0" cellspacing="0"><tr><td style="background:${p.bg};padding:36px 32px;text-align:${p.align}"><h1 style="margin:0;font-family:Arial,sans-serif;font-size:${p.fontSize}px;color:${p.color};font-weight:700">${p.title}</h1>${p.subtitle?`<p style="margin:8px 0 0;font-family:Arial,sans-serif;color:${p.color};opacity:.85;font-size:15px">${p.subtitle}</p>`:''}</td></tr></table>`;
+    case'text':return`<table width="100%" cellpadding="0" cellspacing="0"><tr><td style="padding:${p.padding}px 32px"><p style="margin:0;font-family:Arial,sans-serif;font-size:${p.fontSize}px;color:${p.color};line-height:1.7;text-align:${p.align};white-space:pre-line">${p.content}</p></td></tr></table>`;
+    case'logo':{
+      const imgStyle=`max-width:${p.width||'180px'};height:auto;display:block;${fmtAl(p.align||'center')}`;
+      const img=`<img src="${p.src}" alt="${p.alt||'Logo'}" style="${imgStyle}"/>`;
+      const inner=p.link?`<a href="${p.link}" style="display:block;text-decoration:none">${img}</a>`:img;
+      return`<table width="100%" cellpadding="0" cellspacing="0" style="background:${p.bg||'#fff'}"><tr><td style="padding:${p.padding||20}px 32px;text-align:${p.align||'center'}">${inner}</td></tr></table>`;
+    }
+    case'image':{
+      const cols=Number(p.cols)||1;
+      const r=Number(p.radius)||0;
+      const rStyle=r?`border-radius:${r}px;overflow:hidden;`:'';
+      const gap=Number(p.gap)||8;
+      if(cols===1){
+        const imgStyle=`max-width:${p.width||'100%'};height:auto;display:block;${fmtAl(p.align||'center')};${rStyle}`;
+        const img=`<img src="${p.src}" alt="${p.alt||''}" style="${imgStyle}"/>`;
+        const linked=p.link?`<a href="${p.link}" style="display:block;text-decoration:none">${img}</a>`:img;
+        const caption=p.caption?`<p style="margin:8px 0 0;font-family:Arial,sans-serif;font-size:12px;color:#999;text-align:${p.align||'center'};font-style:italic">${p.caption}</p>`:'';
+        return`<table width="100%" cellpadding="0" cellspacing="0" style="background:${p.bg||'#fff'}"><tr><td style="padding:${p.padding||0}px 0">${linked}${caption}</td></tr></table>`;
+      }
+      if(cols===2){
+        const w=`calc(50% - ${gap/2}px)`;
+        const mk=(src,idx)=>`<td width="50%" style="padding:${idx===0?`0 ${gap/2}px 0 0`:`0 0 0 ${gap/2}px`}"><img src="${src}" alt="" style="width:100%;height:auto;display:block;${rStyle}"/></td>`;
+        return`<table width="100%" cellpadding="0" cellspacing="0" style="background:${p.bg||'#fff'}"><tr><td style="padding:${p.padding||0}px 0"><table width="100%" cellpadding="0" cellspacing="0"><tr>${mk(p.src,0)}${mk(p.src2||p.src,1)}</tr></table>${p.caption?`<p style="margin:8px 0 0;font-family:Arial,sans-serif;font-size:12px;color:#999;text-align:center;font-style:italic">${p.caption}</p>`:''}</td></tr></table>`;
+      }
+      if(cols===3){
+        const g=Math.round(gap*2/3);
+        const mk3=(src,idx)=>`<td width="33%" style="padding:${idx===0?`0 ${g}px 0 0`:idx===2?`0 0 0 ${g}px`:`0 ${g/2}px`}"><img src="${src}" alt="" style="width:100%;height:auto;display:block;${rStyle}"/></td>`;
+        return`<table width="100%" cellpadding="0" cellspacing="0" style="background:${p.bg||'#fff'}"><tr><td style="padding:${p.padding||0}px 0"><table width="100%" cellpadding="0" cellspacing="0"><tr>${mk3(p.src,0)}${mk3(p.src2||p.src,1)}${mk3(p.src3||p.src,2)}</tr></table>${p.caption?`<p style="margin:8px 0 0;font-family:Arial,sans-serif;font-size:12px;color:#999;text-align:center;font-style:italic">${p.caption}</p>`:''}</td></tr></table>`;
+      }
+      return'';
+    }
+    case'button':return`<table width="100%" cellpadding="0" cellspacing="0"><tr><td style="padding:16px 32px;text-align:${p.align}"><a href="${p.url}" style="display:inline-block;background:${p.bg};color:${p.color};padding:12px 28px;border-radius:${p.borderRadius}px;font-size:${p.fontSize}px;font-family:Arial,sans-serif;text-decoration:none;font-weight:600">${p.label}</a></td></tr></table>`;
+    case'divider':return`<table width="100%" cellpadding="0" cellspacing="0"><tr><td style="padding:${p.padding}px 32px"><hr style="border:none;border-top:${p.thickness}px solid ${p.color}"/></td></tr></table>`;
+    case'spacer':return`<table width="100%" cellpadding="0" cellspacing="0"><tr><td style="height:${p.height}px;font-size:0;line-height:0">&nbsp;</td></tr></table>`;
+    case'columns':return`<table width="100%" cellpadding="0" cellspacing="0" style="background:${p.bg}"><tr><td width="50%" style="padding:24px 16px 24px 32px;vertical-align:top;font-family:Arial,sans-serif;font-size:${p.fontSize}px;color:${p.color};white-space:pre-line">${p.col1}</td><td width="50%" style="padding:24px 32px 24px 16px;vertical-align:top;font-family:Arial,sans-serif;font-size:${p.fontSize}px;color:${p.color};white-space:pre-line">${p.col2}</td></tr></table>`;
+    case'social':return`<table width="100%" cellpadding="0" cellspacing="0" style="background:${p.bg}"><tr><td style="padding:16px 32px;text-align:${p.align}">${['twitter','linkedin','facebook','instagram'].map(s=>`<a href="${p[s]}" style="display:inline-block;margin:0 5px;color:${p.color};font-family:Arial,sans-serif;font-size:13px;text-decoration:none;border:1px solid ${p.color};padding:5px 12px;border-radius:4px">${s[0].toUpperCase()+s.slice(1)}</a>`).join('')}</td></tr></table>`;
+    case'footer':return`<table width="100%" cellpadding="0" cellspacing="0" style="background:${p.bg}"><tr><td style="padding:20px 32px;text-align:${p.align}"><p style="margin:0;font-family:Arial,sans-serif;font-size:${p.fontSize}px;color:${p.color}">${p.text}</p><p style="margin:8px 0 0;font-family:Arial,sans-serif;font-size:11px"><a href="#" style="color:${p.color};text-decoration:underline">${p.unsubscribe}</a></p></td></tr></table>`;
+    case'html':return p.code||'';
+    default:return'';
+  }
+}
+
+function buildEmail(blocks,settings={},preview=false){
+  const vars={prenom:'Sophie',nom:'Martin',email:'sophie@exemple.fr',entreprise:'Acme',desabonnement:'Se desabonner'};
+  const bg=settings.bgColor||'#f0f0f0';
+  const preH=settings.preheader?`<div style="display:none;max-height:0;overflow:hidden;mso-hide:all;font-size:1px">${settings.preheader}&nbsp;</div>`:'';
+  let html=`<!DOCTYPE html>\n<html>\n<head>\n<meta charset="UTF-8"/>\n<title>${settings.subject||'Email'}</title>\n</head>\n<body style="margin:0;padding:0;background:${bg}">\n${preH}\n<table width="100%" style="background:${bg}" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:20px 0">\n<table width="600" style="background:#ffffff" cellpadding="0" cellspacing="0">\n`;
+  html+=blocks.map(b=>`<tr><td>${renderBlock(b)}</td></tr>`).join('\n');
+  html+=`\n</table>\n</td></tr></table>\n</body>\n</html>`;
+  if(preview)Object.entries(vars).forEach(([k,v])=>{html=html.replaceAll(`{{${k}}}`,v);});
+  return html;
+}
+
+function BView({block,sel,onSel,onDel,onUp,onDown,onDup,idx,total}){
+  const p=block.props;
+  let inner=null;
+  switch(block.type){
+    case'header':inner=<div style={{background:p.bg,padding:'24px 18px',textAlign:p.align}}><div style={{color:p.color,fontSize:Math.min(p.fontSize,24),fontWeight:700,lineHeight:1.2}}>{p.title}</div>{p.subtitle&&<div style={{color:p.color,opacity:.85,marginTop:4,fontSize:12}}>{p.subtitle}</div>}</div>;break;
+    case'text':inner=<div style={{padding:`${p.padding}px 18px`,color:p.color,fontSize:Math.min(p.fontSize,15),lineHeight:1.7,textAlign:p.align,whiteSpace:'pre-line'}}>{p.content}</div>;break;
+    case'logo':{
+      const ls={maxWidth:p.width||'180px',height:'auto',display:'block',margin:p.align==='center'?'0 auto':p.align==='right'?'0 0 0 auto':'0',maxHeight:80};
+      inner=<div style={{padding:`${p.padding||20}px 18px`,background:p.bg||'#fff',textAlign:p.align||'center',position:'relative'}}>
+        <img src={p.src} alt={p.alt||'Logo'} style={ls}/>
+        {p.link&&<span style={{position:'absolute',bottom:4,right:4,background:'rgba(0,0,0,.5)',color:'#fff',fontSize:9,padding:'1px 5px',borderRadius:3}}>Lien</span>}
+      </div>;break;
+    }
+    case'image':{
+      const cols=Number(p.cols)||1;
+      const r=Number(p.radius)||0;
+      const rStyle=r?{borderRadius:r,overflow:'hidden'}:{};
+      const singleImg=(src,maxH=160)=><img src={src} alt="" style={{width:'100%',height:'auto',display:'block',maxHeight:maxH,...rStyle,background:'#eee'}}/>;
+      inner=<div style={{background:p.bg||'#fff',padding:`${p.padding||0}px 0`,position:'relative'}}>
+        {cols===1&&<div style={{...{maxWidth:p.width||'100%'},margin:p.align==='center'?'0 auto':p.align==='right'?'0 0 0 auto':'0',...rStyle,overflow:'hidden'}}><img src={p.src} alt={p.alt||''} style={{width:'100%',height:'auto',display:'block',maxHeight:160,background:'#eee'}}/></div>}
+        {cols===2&&<div style={{display:'flex',gap:Number(p.gap)||8}}><div style={{flex:1,...rStyle,overflow:'hidden'}}>{singleImg(p.src)}</div><div style={{flex:1,...rStyle,overflow:'hidden'}}>{singleImg(p.src2||p.src)}</div></div>}
+        {cols===3&&<div style={{display:'flex',gap:Number(p.gap)||8}}><div style={{flex:1,...rStyle,overflow:'hidden'}}>{singleImg(p.src,100)}</div><div style={{flex:1,...rStyle,overflow:'hidden'}}>{singleImg(p.src2||p.src,100)}</div><div style={{flex:1,...rStyle,overflow:'hidden'}}>{singleImg(p.src3||p.src,100)}</div></div>}
+        {p.caption&&<div style={{fontSize:11,color:'#999',fontStyle:'italic',textAlign:p.align||'center',padding:'5px 18px 0'}}>{p.caption}</div>}
+        {p.link&&cols===1&&<span style={{position:'absolute',bottom:4,right:4,background:'rgba(0,0,0,.5)',color:'#fff',fontSize:9,padding:'1px 5px',borderRadius:3}}>Lien</span>}
+      </div>;break;
+    }
+    case'button':inner=<div style={{padding:'10px 18px',textAlign:p.align}}><span style={{display:'inline-block',background:p.bg,color:p.color,padding:'8px 20px',borderRadius:p.borderRadius,fontSize:Math.min(p.fontSize,14),fontWeight:600}}>{p.label}</span></div>;break;
+    case'divider':inner=<div style={{padding:`${p.padding}px 18px`}}><hr style={{border:'none',borderTop:`${p.thickness}px solid ${p.color}`}}/></div>;break;
+    case'spacer':inner=<div style={{height:Math.min(p.height,40),background:'repeating-linear-gradient(45deg,#f8f8f8,#f8f8f8 4px,#fff 4px,#fff 10px)'}}>&nbsp;</div>;break;
+    case'columns':inner=<div style={{display:'flex',background:p.bg}}><div style={{flex:1,padding:'12px 8px 12px 18px',color:p.color,fontSize:p.fontSize,borderRight:'1px dashed #e0e0e0',whiteSpace:'pre-line'}}>{p.col1}</div><div style={{flex:1,padding:'12px 18px 12px 8px',color:p.color,fontSize:p.fontSize,whiteSpace:'pre-line'}}>{p.col2}</div></div>;break;
+    case'social':inner=<div style={{background:p.bg,padding:'10px 18px',textAlign:p.align}}>{['twitter','linkedin','facebook','instagram'].map(s=><span key={s} style={{display:'inline-block',margin:'0 3px',color:p.color,fontSize:10,border:`1px solid ${p.color}`,padding:'3px 8px',borderRadius:4}}>{s[0].toUpperCase()+s.slice(1)}</span>)}</div>;break;
+    case'footer':inner=<div style={{background:p.bg,padding:'12px 18px',textAlign:p.align}}><div style={{color:p.color,fontSize:Math.min(p.fontSize,12)}}>{p.text}</div><div style={{marginTop:3,fontSize:10}}><a href="#" style={{color:p.color}}>{p.unsubscribe}</a></div></div>;break;
+    case'html':inner=<div style={{position:'relative'}}><div style={{position:'absolute',top:4,right:4,background:'rgba(232,64,28,.9)',color:'#fff',fontSize:9,padding:'1px 5px',borderRadius:3,zIndex:2,pointerEvents:'none'}}>HTML</div><iframe srcDoc={`<!DOCTYPE html><html><head><meta charset="UTF-8"><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif}</style></head><body>${p.code||''}</body></html>`} style={{width:'100%',minHeight:50,border:'none',display:'block'}} scrolling="no" onLoad={e=>{try{e.target.style.height=e.target.contentDocument.body.scrollHeight+'px';}catch{}}} title="html"/></div>;break;
+  }
+  return<div className={`eblock${sel?' sel':''}`} onClick={e=>{e.stopPropagation();onSel(block.id)}}>
+    {inner}
+    <div className="bctrl">
+      {idx>0&&<button className="cbtn" title="Monter" onClick={e=>{e.stopPropagation();onUp(block.id)}}><i className="ti ti-arrow-up"/></button>}
+      {idx<total-1&&<button className="cbtn" title="Descendre" onClick={e=>{e.stopPropagation();onDown(block.id)}}><i className="ti ti-arrow-down"/></button>}
+      <button className="cbtn" title="Dupliquer" onClick={e=>{e.stopPropagation();onDup(block.id)}}><i className="ti ti-copy"/></button>
+      <button className="cbtn red" title="Supprimer" onClick={e=>{e.stopPropagation();onDel(block.id)}}><i className="ti ti-trash"/></button>
+    </div>
+  </div>;
+}
+
+function ColorField({label,val,onChange}){return<div><label className="fl">{label}</label><div className="crow"><div className="csw"><input type="color" value={val} onChange={e=>onChange(e.target.value)}/></div><input className="fi" style={{flex:1,marginBottom:0}} type="text" value={val} onChange={e=>onChange(e.target.value)}/></div></div>;}
+function TextField({label,val,onChange,type='text'}){return<div><label className="fl">{label}</label><input className="fi" type={type} value={val} onChange={e=>onChange(type==='number'?Number(e.target.value):e.target.value)}/></div>;}
+function TextareaField({label,val,onChange,rows=3}){return<div><label className="fl">{label}</label><textarea className="fi" rows={rows} value={val} onChange={e=>onChange(e.target.value)}/></div>;}
+function AlignBtns({val,onChange}){return<div><label className="fl">Alignement</label><div className="qbtn-row">{[['left','Gauche','ti-align-left'],['center','Centre','ti-align-center'],['right','Droite','ti-align-right']].map(([v,l,ic])=><button key={v} className={`qbtn${val===v?' on':''}`} onClick={()=>onChange(v)}><i className={`ti ${ic}`} style={{fontSize:11,verticalAlign:-1,marginRight:2}}/>{l}</button>)}</div></div>;}
+
+function PropPanel({block,onChange,toast}){
+  if(!block)return null;
+  const p=block.props;
+  const s=(k,v)=>onChange(block.id,{...p,[k]:v});
+  const T=(label,k,type='text')=><TextField label={label} val={p[k]} onChange={v=>s(k,v)} type={type}/>;
+  const TA=(label,k,rows=3)=><TextareaField label={label} val={p[k]} onChange={v=>s(k,v)} rows={rows}/>;
+  const C=(label,k)=><ColorField label={label} val={p[k]} onChange={v=>s(k,v)}/>;
+  const AL=()=><AlignBtns val={p.align} onChange={v=>s('align',v)}/>;
+  const names={header:'En-tete',text:'Texte',logo:'Logo',image:'Image',button:'Bouton',divider:'Separateur',spacer:'Espacement',columns:'2 Colonnes',social:'Reseaux sociaux',html:'HTML libre',footer:'Pied de page'};
+  return<div>
+    <div style={{fontSize:11,color:'#666',marginBottom:10,fontWeight:600}}>{names[block.type]||block.type}</div>
+    {block.type==='header'&&<>{T('Titre','title')}{T('Sous-titre','subtitle')}{T('Taille','fontSize','number')}{C('Fond','bg')}{C('Texte','color')}{AL()}</>}
+    {block.type==='text'&&<>{TA('Contenu','content',4)}{T('Taille','fontSize','number')}{C('Couleur','color')}{AL()}{T('Padding (px)','padding','number')}</>}
+
+    {block.type==='logo'&&<>
+      <div className="info-box" style={{marginBottom:10}}><i className="ti ti-info-circle" style={{fontSize:12,verticalAlign:-2,marginRight:3}}/>Bloc logo : taille contenue, place en haut de l'email, avec lien vers votre site.</div>
+      {T('URL du logo','src')}
+      {T('Texte alternatif','alt')}
+      <label className="fl">Largeur du logo</label>
+      <div className="qbtn-row">{['120px','160px','180px','200px','240px'].map(w=><button key={w} className={`qbtn${p.width===w?' on':''}`} onClick={()=>s('width',w)}>{w}</button>)}</div>
+      <input className="fi" style={{marginTop:-4}} type="text" placeholder="Autre ex: 300px" value={p.width} onChange={e=>s('width',e.target.value)}/>
+      {AL()}
+      {T('Lien (URL site)','link')}
+      {T('Padding vertical (px)','padding','number')}
+      {C('Fond du bloc','bg')}
+    </>}
+
+    {block.type==='image'&&<>
+      <label className="fl">Disposition</label>
+      <div className="qbtn-row" style={{marginBottom:10}}>
+        {[['1','1 image','ti-square'],['2','2 colonnes','ti-layout-columns-2'],['3','3 colonnes','ti-layout-columns-3']].map(([v,l,ic])=>(
+          <button key={v} className={`qbtn${String(p.cols||1)===v?' on':''}`} onClick={()=>s('cols',Number(v))} style={{display:'flex',alignItems:'center',justifyContent:'center',gap:4}}>
+            <i className={`ti ${ic}`} style={{fontSize:12}}/>{l}
+          </button>
+        ))}
+      </div>
+      {T("URL image principale",'src')}
+      {(p.cols===2||p.cols===3)&&<TextField label="URL image 2" val={p.src2||''} onChange={v=>s('src2',v)}/>}
+      {p.cols===3&&<TextField label="URL image 3" val={p.src3||''} onChange={v=>s('src3',v)}/>}
+      {T('Texte alternatif','alt')}
+      {(p.cols||1)===1&&<>
+        <label className="fl">Largeur</label>
+        <div className="qbtn-row">{['100%','75%','50%','300px','400px'].map(w=><button key={w} className={`qbtn${p.width===w?' on':''}`} onClick={()=>s('width',w)}>{w}</button>)}</div>
+        <input className="fi" style={{marginTop:-4}} type="text" placeholder="Ex: 500px" value={p.width} onChange={e=>s('width',e.target.value)}/>
+        {AL()}
+      </>}
+      {(p.cols===2||p.cols===3)&&<TextField label="Espace entre images (px)" val={p.gap||8} onChange={v=>s('gap',Number(v))} type="number"/>}
+      <label className="fl">Arrondi des angles (px)</label>
+      <div className="qbtn-row">{[0,4,8,12,16,999].map(r=><button key={r} className={`qbtn${Number(p.radius||0)===r?' on':''}`} onClick={()=>s('radius',r)} style={{fontSize:10}}>{r===999?'●':r===0?'☐':r+'px'}</button>)}</div>
+      {T('Legende (caption)','caption')}
+      {(p.cols||1)===1&&T('Lien cliquable (URL)','link')}
+      {T('Padding vertical (px)','padding','number')}
+      {C('Fond du bloc','bg')}
+    </>}
+    {block.type==='button'&&<>{T('Texte','label')}{T('URL','url')}{C('Fond','bg')}{C('Texte','color')}{T('Taille','fontSize','number')}{T('Border radius','borderRadius','number')}{AL()}</>}
+    {block.type==='divider'&&<>{C('Couleur','color')}{T('Epaisseur (px)','thickness','number')}{T('Padding (px)','padding','number')}</>}
+    {block.type==='spacer'&&<>{T('Hauteur (px)','height','number')}</>}
+    {block.type==='columns'&&<>{TA('Colonne 1','col1')}{TA('Colonne 2','col2')}{C('Fond','bg')}{C('Texte','color')}{T('Taille','fontSize','number')}</>}
+    {block.type==='social'&&<>{T('Twitter','twitter')}{T('LinkedIn','linkedin')}{T('Facebook','facebook')}{T('Instagram','instagram')}{C('Fond','bg')}{C('Couleur','color')}{AL()}</>}
+    {block.type==='html'&&<>{TA('Code HTML','code',12)}<div className="info-box"><i className="ti ti-info-circle" style={{fontSize:12,verticalAlign:-2,marginRight:3}}/>Styles inline recommandes. Apercu en temps reel dans le canvas.</div></>}
+    {block.type==='footer'&&<>{TA('Texte','text')}{T('Lien desabo.','unsubscribe')}{C('Fond','bg')}{C('Texte','color')}{T('Taille','fontSize','number')}{AL()}</>}
+  </div>;
+}
+
+function EmailSettings({settings,onChange}){
+  const s=(k,v)=>onChange({...settings,[k]:v});
+  return<div>
+    <div className="sh" style={{marginTop:0}}>Parametres email</div>
+    <label className="fl">Objet de l'email</label>
+    <input className="fi" type="text" placeholder="Ex: Newsletter mai 2024" value={settings.subject} onChange={e=>s('subject',e.target.value)}/>
+    <label className="fl">Preheader (apercu inbox)</label>
+    <input className="fi" type="text" placeholder="Texte visible avant ouverture..." value={settings.preheader} onChange={e=>s('preheader',e.target.value)}/>
+    <label className="fl">Fond de l'email</label>
+    <div className="crow" style={{marginBottom:14}}><div className="csw"><input type="color" value={settings.bgColor} onChange={e=>s('bgColor',e.target.value)}/></div><input className="fi" style={{flex:1,marginBottom:0}} type="text" value={settings.bgColor} onChange={e=>s('bgColor',e.target.value)}/></div>
+    <div style={{borderTop:'1px solid var(--bd)',paddingTop:12,marginTop:4}}><p style={{fontSize:11,color:'var(--t3)',lineHeight:1.5}}>Les variables CRM sont disponibles dans l'onglet "Variables CRM" du panneau.</p></div>
+  </div>;
+}
+
+function VarsPanel({toast}){
+  const [search,setSearch]=useState('');
+  const [open,setOpen]=useState({'Contact':true});
+  const q=search.toLowerCase();
+  const filtered=CRM_VARS.map(c=>({
+    ...c,
+    vars:c.vars.filter(v=>!q||v.label.toLowerCase().includes(q)||v.tag.toLowerCase().includes(q))
+  })).filter(c=>c.vars.length>0);
+  const copy=tag=>{navigator.clipboard.writeText(tag).catch(()=>{});toast(tag+' copie !');};
+  return<div>
+    <div style={{position:'relative',marginBottom:10}}>
+      <i className="ti ti-search" style={{position:'absolute',left:9,top:'50%',transform:'translateY(-50%)',fontSize:13,color:'var(--t3)',pointerEvents:'none'}}/>
+      <input className="fi" style={{paddingLeft:28,marginBottom:0}} placeholder="Rechercher une variable..." value={search} onChange={e=>setSearch(e.target.value)}/>
+    </div>
+    {filtered.length===0&&<div style={{fontSize:12,color:'var(--t3)',textAlign:'center',padding:'16px 0'}}>Aucune variable trouvee</div>}
+    {filtered.map(cat=>{
+      const isOpen=open[cat.cat]!==false;
+      return<div key={cat.cat} style={{marginBottom:6}}>
+        <button onClick={()=>setOpen(o=>({...o,[cat.cat]:!isOpen}))} style={{width:'100%',display:'flex',alignItems:'center',gap:6,padding:'6px 8px',background:'var(--bg2)',border:'1px solid var(--bd)',borderRadius:7,cursor:'pointer',fontFamily:'inherit',fontSize:11,fontWeight:600,color:'var(--t2)'}}>
+          <i className={`ti ${cat.icon}`} style={{fontSize:13,color:'#E8401C'}}/>
+          {cat.cat}
+          <span style={{marginLeft:'auto',fontSize:10,color:'var(--t3)'}}>{cat.vars.length}</span>
+          <i className={`ti ${isOpen?'ti-chevron-up':'ti-chevron-down'}`} style={{fontSize:11}}/>
+        </button>
+        {isOpen&&<div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:4,padding:'6px 2px 2px'}}>
+          {cat.vars.map(v=><button key={v.tag} title={v.tag} onClick={()=>copy(v.tag)} style={{display:'flex',flexDirection:'column',alignItems:'flex-start',padding:'5px 8px',background:'#fff',border:'1px solid var(--bd)',borderRadius:6,cursor:'pointer',fontFamily:'inherit',textAlign:'left',gap:1,transition:'all .1s'}}
+            onMouseEnter={e=>{e.currentTarget.style.borderColor='#E8401C';e.currentTarget.style.background='#fff0ed';}}
+            onMouseLeave={e=>{e.currentTarget.style.borderColor='var(--bd)';e.currentTarget.style.background='#fff';}}>
+            <span style={{fontSize:10,fontWeight:600,color:'var(--t)',lineHeight:1.2}}>{v.label}</span>
+            <span style={{fontSize:9,color:'var(--t3)',fontFamily:'monospace'}}>{v.tag}</span>
+          </button>)}
+        </div>}
+      </div>;
+    })}
+    <div style={{marginTop:10,padding:'8px',background:'var(--bg2)',borderRadius:6,fontSize:10,color:'var(--t3)',lineHeight:1.6}}>
+      <i className="ti ti-info-circle" style={{fontSize:12,verticalAlign:-2,marginRight:3}}/>
+      Cliquez sur une variable pour la copier dans le presse-papier, puis collez-la dans le champ de votre choix.
+    </div>
+  </div>;
+}
+
+function ExportModal({blocks,settings,onClose}){
+  const [tab,setTab]=useState('preview');
+  const html=buildEmail(blocks,settings,false);
+  const htmlP=buildEmail(blocks,settings,true);
+  const json=JSON.stringify({settings,blocks},null,2);
+  const copy=txt=>navigator.clipboard.writeText(txt).catch(()=>alert('Copiez manuellement'));
+  const dl=(c,n,t)=>{const a=document.createElement('a');a.href=`data:${t};charset=utf-8,`+encodeURIComponent(c);a.download=n;a.click();};
+  return<div className="overlay" onClick={onClose}><div className="modal" onClick={e=>e.stopPropagation()}>
+    <div className="mh">Exporter</div>
+    <div className="mtabs">{[['preview','Apercu'],['html','HTML source'],['json','JSON']].map(([v,l])=><button key={v} className={`mtab${tab===v?' on':''}`} onClick={()=>setTab(v)}>{l}</button>)}</div>
+    {tab==='preview'&&<iframe srcDoc={htmlP} style={{width:'100%',height:420,border:'1px solid #e0e0e0',borderRadius:8}} title="Apercu"/>}
+    {tab==='html'&&<pre>{html}</pre>}
+    {tab==='json'&&<pre>{json}</pre>}
+    <div className="mfoot">
+      <button className="sbtn" onClick={onClose}>Fermer</button>
+      {tab==='html'&&<><button className="sbtn" onClick={()=>copy(html)}><i className="ti ti-copy"/>Copier</button><button className="sbtn sbtn-ac" onClick={()=>dl(html,'email.html','text/html')}><i className="ti ti-download"/>Telecharger</button></>}
+      {tab==='json'&&<><button className="sbtn" onClick={()=>copy(json)}><i className="ti ti-copy"/>Copier</button><button className="sbtn sbtn-ac" onClick={()=>dl(json,'email.json','application/json')}><i className="ti ti-download"/>Telecharger</button></>}
+    </div>
+  </div></div>;
+}
+
+function SaveModal({onSave,onClose}){
+  const [name,setName]=useState('');
+  return<div className="overlay" onClick={onClose}><div className="modal-sm" onClick={e=>e.stopPropagation()}>
+    <div className="mh">Enregistrer la creation</div>
+    <div className="mh2">Donnez un nom a votre email.</div>
+    <input className="sinput" placeholder="Ex: Newsletter mai 2024" value={name} onChange={e=>setName(e.target.value)} onKeyDown={e=>e.key==='Enter'&&name.trim()&&onSave(name.trim())} autoFocus/>
+    <div className="mfoot">
+      <button className="sbtn" onClick={onClose}>Annuler</button>
+      <button className="sbtn sbtn-ac" onClick={()=>name.trim()&&onSave(name.trim())} disabled={!name.trim()}><i className="ti ti-device-floppy"/>Enregistrer</button>
+    </div>
+  </div></div>;
+}
+
+function CreationsTab({creations,onLoad,onDelete,toast}){
+  if(!creations.length)return<div className="cempty"><i className="ti ti-inbox"/><p>Aucune creation sauvegardee.<br/>Cliquez "Enregistrer" dans la barre du haut.</p></div>;
+  return<>{[...creations].reverse().map(c=>{
+    const fb=c.blocks&&c.blocks[0];const ac=(fb&&fb.props&&fb.props.bg)||'#E8401C';
+    return<div key={c.id} className="ccard">
+      <div className="tthumb"><div className="tbar" style={{background:ac,width:'100%'}}/><div className="tbar" style={{background:'#d0d0d0',width:'72%'}}/><div className="tbar" style={{background:'#d0d0d0',width:'52%'}}/><div className="tbar" style={{background:ac,width:46}}/></div>
+      <div className="cmeta"><span className="cname" title={c.name}>{c.name}</span><div className="cacts"><button className="cact" title="Ouvrir" onClick={()=>onLoad(c)}><i className="ti ti-folder-open" style={{fontSize:12}}/></button><button className="cact del" title="Supprimer" onClick={()=>{if(window.confirm(`Supprimer "${c.name}" ?`)){onDelete(c.id);toast('Supprime');}}}>  <i className="ti ti-trash" style={{fontSize:12}}/></button></div></div>
+      <div className="cdate">{fmtDate(c.savedAt)}</div>
+    </div>;
+  })}</>;
+}
+
+/* ---- Modules Tab ---- */
+function ModulesTab({onInsert}){
+  const [activeCat,setActiveCat]=useState('Tous');
+  const cats=['Tous',...MODULE_CATS];
+  const filtered=activeCat==='Tous'?MODULES:MODULES.filter(m=>m.cat===activeCat);
+  return<div>
+    <div style={{display:'flex',flexWrap:'wrap',gap:4,marginBottom:10}}>
+      {cats.map(c=><button key={c} className={`qbtn${activeCat===c?' on':''}`} style={{flex:'none',padding:'4px 10px'}} onClick={()=>setActiveCat(c)}>{c}</button>)}
+    </div>
+    {filtered.map(m=><div key={m.id} className="mcard" onClick={()=>onInsert(m)}>
+      <div className="mcard-thumb" style={{fontSize:0,lineHeight:0,transform:'scale(0.5)',transformOrigin:'top left',width:'200%',height:'144px',pointerEvents:'none',userSelect:'none'}}>
+        {m.preview}
+      </div>
+      <div className="mcard-label">
+        <span className="mcard-name">{m.name}</span>
+        <span className="mcard-tag">{m.tag}</span>
+      </div>
+    </div>)}
+  </div>;
+}
+
+function App(){
+  const [blocks,setBlocks]=useState(()=>TMPLS[0].blocks.map(b=>cloneB(b)));
+  const [settings,setSettings]=useState({subject:'',preheader:'',bgColor:'#f0f0f0'});
+  const [sel,setSel]=useState(null);
+  const [drag,setDrag]=useState(null);
+  const [dragOver,setDragOver]=useState(null);
+  const [showExport,setShowExport]=useState(false);
+  const [showSave,setShowSave]=useState(false);
+  const [sTab,setSTab]=useState('blocs');
+  const [pTab,setPTab]=useState('props');
+  const [view,setView]=useState('desktop');
+  const [notif,setNotif]=useState('');
+  const [creations,setCreations]=useState(()=>lsLoad());
+  const timerRef=useRef();
+
+  const toast=msg=>{setNotif(msg);clearTimeout(timerRef.current);timerRef.current=setTimeout(()=>setNotif(''),2400);};
+  const selBlock=blocks.find(b=>b.id===sel)||null;
+
+  const addBlock=(type,atIdx)=>{const nb={id:uid(),type,props:{...DEF[type]}};setBlocks(prev=>{const a=[...prev];a.splice(atIdx!=null?atIdx:a.length,0,nb);return a;});setSel(nb.id);};
+  const insertModule=m=>{const nb={id:uid(),type:'html',props:{code:m.html}};setBlocks(p=>[...p,nb]);setSel(nb.id);toast(`Module "${m.name}" ajoute`);};
+  const loadTpl=tpl=>{setBlocks(tpl.blocks.map(b=>cloneB(b)));setSel(null);toast('Template charge');};
+  const delBlock=id=>{setBlocks(p=>p.filter(b=>b.id!==id));if(sel===id)setSel(null);};
+  const updBlock=(id,props)=>setBlocks(p=>p.map(b=>b.id===id?{...b,props}:b));
+  const dupBlock=id=>{const i=blocks.findIndex(b=>b.id===id);if(i<0)return;const d=cloneB(blocks[i]);setBlocks(p=>{const a=[...p];a.splice(i+1,0,d);return a;});setSel(d.id);toast('Bloc duplique');};
+  const moveUp=id=>setBlocks(p=>{const i=p.findIndex(b=>b.id===id);if(i<=0)return p;const a=[...p];[a[i-1],a[i]]=[a[i],a[i-1]];return a;});
+  const moveDown=id=>setBlocks(p=>{const i=p.findIndex(b=>b.id===id);if(i>=p.length-1)return p;const a=[...p];[a[i],a[i+1]]=[a[i+1],a[i]];return a;});
+  const handleSave=name=>{const e={id:String(Date.now()),name,savedAt:Date.now(),blocks:blocks.map(b=>cloneB(b)),settings};const u=[...creations,e];setCreations(u);lsSave(u);setShowSave(false);toast(`"${name}" enregistre !`);};
+  const handleLoad=c=>{if(blocks.length>0&&!window.confirm("Remplacer l'email en cours ?"))return;setBlocks(c.blocks.map(b=>cloneB(b)));if(c.settings)setSettings(c.settings);setSel(null);setSTab('blocs');toast(`"${c.name}" ouvert`);};
+  const handleDelete=id=>{const u=creations.filter(c=>c.id!==id);setCreations(u);lsSave(u);};
+  const onDrop=at=>{if(drag){addBlock(drag,at);setDrag(null);setDragOver(null);}};
+
+  return<div className="app">
+    <header className="topbar">
+      <div className="logo">
+        <svg width="30" height="30" viewBox="0 0 30 30" fill="none"><rect width="30" height="30" rx="7" fill="#E8401C"/><path d="M5 22 L9 10 L14 17 L18 11 L25 22" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/><circle cx="25" cy="22" r="2.2" fill="white"/></svg>
+        <span className="lw">Pit<b>lane</b></span>
+      </div>
+      <div className="vsep"/>
+      <button className="tbtn" onClick={()=>{if(!blocks.length||window.confirm('Vider le canvas ?')){setBlocks([]);setSel(null);}}}><i className="ti ti-trash"/>Vider</button>
+      <button className="tbtn" onClick={()=>setShowSave(true)}><i className="ti ti-device-floppy"/>Enregistrer</button>
+      <div className="fx"/>
+      <span style={{fontSize:11,color:'rgba(255,255,255,.35)'}}>{blocks.length} bloc{blocks.length!==1?'s':''}</span>
+      <button className="tbtn tbtn-ac" onClick={()=>setShowExport(true)}><i className="ti ti-download"/>Exporter HTML</button>
+    </header>
+
+    <aside className="sidebar">
+      <div className="stabs">
+        <button className={`stab${sTab==='blocs'?' on':''}`} onClick={()=>setSTab('blocs')}>Blocs</button>
+        <button className={`stab${sTab==='modules'?' on':''}`} onClick={()=>setSTab('modules')}><i className="ti ti-layout-grid" style={{fontSize:11,verticalAlign:-1,marginRight:2}}/>Modules</button>
+        <button className={`stab${sTab==='templates'?' on':''}`} onClick={()=>setSTab('templates')}>Tmpls</button>
+        <button className={`stab${sTab==='creations'?' on':''}`} onClick={()=>setSTab('creations')}>Mes emails{creations.length>0&&<span className="nbadge">{creations.length}</span>}</button>
+      </div>
+      <div className="sbody">
+        {sTab==='blocs'&&<>
+          <div className="sh">Elements</div>
+          {BTYPES.map(bt=><div key={bt.type} className="bitem" draggable onDragStart={()=>setDrag(bt.type)} onDragEnd={()=>{setDrag(null);setDragOver(null);}} onClick={()=>addBlock(bt.type)}><i className={`ti ${bt.icon}`}/>{bt.label}</div>)}
+        </>}
+        {sTab==='modules'&&<ModulesTab onInsert={insertModule}/>}
+        {sTab==='templates'&&<>
+          <div className="sh">Templates autobiz</div>
+          {TMPLS.map(t=><div key={t.name} className="tcard" onClick={()=>loadTpl(t)}><div className="tthumb"><div className="tbar" style={{background:t.color,width:'100%'}}/><div className="tbar" style={{background:'#d0d0d0',width:'78%'}}/><div className="tbar" style={{background:'#d0d0d0',width:'58%'}}/><div className="tbar" style={{background:t.color,width:52}}/></div><div className="tlabel">{t.name}</div></div>)}
+        </>}
+        {sTab==='creations'&&<CreationsTab creations={creations} onLoad={handleLoad} onDelete={handleDelete} toast={toast}/>}
+      </div>
+    </aside>
+
+    <main className="canvas" onClick={()=>setSel(null)}>
+      <div className="ctop">
+        <span style={{fontSize:11,color:'#888'}}>{view==='desktop'?'600px':'375px'} — {view==='desktop'?'Desktop':'Mobile'}</span>
+        <div className="vtog">
+          <button className={`vtab${view==='desktop'?' on':''}`} onClick={()=>setView('desktop')}><i className="ti ti-device-laptop" style={{fontSize:13}}/> Desktop</button>
+          <button className={`vtab${view==='mobile'?' on':''}`} onClick={()=>setView('mobile')}><i className="ti ti-device-mobile" style={{fontSize:13}}/> Mobile</button>
+        </div>
+      </div>
+      <div className="ewrap" style={{width:view==='desktop'?600:375,minHeight:400}}>
+        {!blocks.length
+          ?<div className="eempty"><i className="ti ti-layout-navbar"/><p>Glissez un bloc ici ou cliquez dans la sidebar pour commencer</p></div>
+          :<>
+            <div className={`dzone${dragOver===0?' over':''}`} style={{minHeight:drag?38:6}} onDragOver={e=>{e.preventDefault();setDragOver(0)}} onDragLeave={()=>setDragOver(null)} onDrop={()=>onDrop(0)}/>
+            {blocks.map((b,i)=><React.Fragment key={b.id}>
+              <BView block={b} sel={sel===b.id} onSel={setSel} onDel={delBlock} onUp={moveUp} onDown={moveDown} onDup={dupBlock} idx={i} total={blocks.length}/>
+              <div className={`dzone${dragOver===i+1?' over':''}`} style={{minHeight:drag?38:6}} onDragOver={e=>{e.preventDefault();setDragOver(i+1)}} onDragLeave={()=>setDragOver(null)} onDrop={()=>onDrop(i+1)}/>
+            </React.Fragment>)}
+          </>
+        }
+      </div>
+    </main>
+
+    <aside className="panel">
+      <div style={{display:'flex',borderBottom:'1px solid var(--bd)',flexShrink:0}}>
+        <button className={`stab${pTab==='props'?' on':''}`} style={{flex:1,padding:'9px 4px',fontSize:11}} onClick={()=>setPTab('props')}><i className="ti ti-settings" style={{fontSize:12,verticalAlign:-1,marginRight:3}}/>Proprietes</button>
+        <button className={`stab${pTab==='vars'?' on':''}`} style={{flex:1,padding:'9px 4px',fontSize:11}} onClick={()=>setPTab('vars')}><i className="ti ti-braces" style={{fontSize:12,verticalAlign:-1,marginRight:3}}/>Variables CRM</button>
+      </div>
+      <div className="pb">
+        {pTab==='props'&&(selBlock?<PropPanel block={selBlock} onChange={updBlock} toast={toast}/>:<EmailSettings settings={settings} onChange={setSettings}/>)}
+        {pTab==='vars'&&<VarsPanel toast={toast}/>}
+      </div>
+    </aside>
+
+    {showExport&&<ExportModal blocks={blocks} settings={settings} onClose={()=>setShowExport(false)}/>}
+    {showSave&&<SaveModal onSave={handleSave} onClose={()=>setShowSave(false)}/>}
+    <div className={`notif${notif?' show':''}`}>{notif}</div>
+  </div>;
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
