@@ -416,7 +416,7 @@ function BView({block,sel,onSel,onDel,onUp,onDown,onDup,idx,total}){
     case'header':inner=<div style={{background:p.bg,padding:'24px 18px',textAlign:p.align}}><div style={{color:p.color,fontSize:Math.min(p.fontSize,24),fontWeight:700,lineHeight:1.2}}>{p.title}</div>{p.subtitle&&<div style={{color:p.color,opacity:.85,marginTop:4,fontSize:12}}>{p.subtitle}</div>}</div>;break;
     case'text':inner=<div style={{padding:`${p.padding}px 18px`,color:p.color,fontSize:Math.min(p.fontSize,15),lineHeight:1.7,textAlign:p.align,whiteSpace:'pre-line'}}>{p.content}</div>;break;
     case'logo':{
-      const ls={maxWidth:p.width||'180px',height:'auto',display:'block',margin:p.align==='center'?'0 auto':p.align==='right'?'0 0 0 auto':'0',maxHeight:80};
+      const ls={maxWidth:p.width||'180px',height:'auto',display:'block',margin:p.align==='center'?'0 auto':p.align==='right'?'0 0 0 auto':'0'};
       inner=<div style={{padding:`${p.padding||20}px 18px`,background:p.bg||'#fff',textAlign:p.align||'center',position:'relative'}}>
         <img src={p.src} alt={p.alt||'Logo'} style={ls}/>
         {p.link&&<span style={{position:'absolute',bottom:4,right:4,background:'rgba(0,0,0,.5)',color:'#fff',fontSize:9,padding:'1px 5px',borderRadius:3}}>Lien</span>}
@@ -426,11 +426,20 @@ function BView({block,sel,onSel,onDel,onUp,onDown,onDup,idx,total}){
       const cols=Number(p.cols)||1;
       const r=Number(p.radius)||0;
       const rStyle=r?{borderRadius:r,overflow:'hidden'}:{};
-      const singleImg=(src,maxH=160)=><img src={src} alt="" style={{width:'100%',height:'auto',display:'block',maxHeight:maxH,...rStyle,background:'#eee'}}/>;
+      const singleImg=(src)=><img src={src} alt="" style={{width:'100%',height:'auto',display:'block',...rStyle}}/>;
       inner=<div style={{background:p.bg||'#fff',padding:`${p.padding||0}px 0`,position:'relative'}}>
-        {cols===1&&<div style={{...{maxWidth:p.width||'100%'},margin:p.align==='center'?'0 auto':p.align==='right'?'0 0 0 auto':'0',...rStyle,overflow:'hidden'}}><img src={p.src} alt={p.alt||''} style={{width:'100%',height:'auto',display:'block',maxHeight:160,background:'#eee'}}/></div>}
-        {cols===2&&<div style={{display:'flex',gap:Number(p.gap)||8}}><div style={{flex:1,...rStyle,overflow:'hidden'}}>{singleImg(p.src)}</div><div style={{flex:1,...rStyle,overflow:'hidden'}}>{singleImg(p.src2||p.src)}</div></div>}
-        {cols===3&&<div style={{display:'flex',gap:Number(p.gap)||8}}><div style={{flex:1,...rStyle,overflow:'hidden'}}>{singleImg(p.src,100)}</div><div style={{flex:1,...rStyle,overflow:'hidden'}}>{singleImg(p.src2||p.src,100)}</div><div style={{flex:1,...rStyle,overflow:'hidden'}}>{singleImg(p.src3||p.src,100)}</div></div>}
+        {cols===1&&<div style={{overflow:'hidden',...rStyle,...(p.width&&p.width!=='100%'?{maxWidth:p.width,margin:p.align==='center'?'0 auto':p.align==='right'?'0 0 0 auto':'0'}:{})}}>
+          <img src={p.src} alt={p.alt||''} style={{width:'100%',height:'auto',display:'block'}}/>
+        </div>}
+        {cols===2&&<div style={{display:'flex',gap:Number(p.gap)||8,padding:'0 0'}}>
+          <div style={{flex:1,overflow:'hidden',...rStyle}}>{singleImg(p.src)}</div>
+          <div style={{flex:1,overflow:'hidden',...rStyle}}>{singleImg(p.src2||p.src)}</div>
+        </div>}
+        {cols===3&&<div style={{display:'flex',gap:Number(p.gap)||8}}>
+          <div style={{flex:1,overflow:'hidden',...rStyle}}>{singleImg(p.src)}</div>
+          <div style={{flex:1,overflow:'hidden',...rStyle}}>{singleImg(p.src2||p.src)}</div>
+          <div style={{flex:1,overflow:'hidden',...rStyle}}>{singleImg(p.src3||p.src)}</div>
+        </div>}
         {p.caption&&<div style={{fontSize:11,color:'#999',fontStyle:'italic',textAlign:p.align||'center',padding:'5px 18px 0'}}>{p.caption}</div>}
         {p.link&&cols===1&&<span style={{position:'absolute',bottom:4,right:4,background:'rgba(0,0,0,.5)',color:'#fff',fontSize:9,padding:'1px 5px',borderRadius:3}}>Lien</span>}
       </div>;break;
